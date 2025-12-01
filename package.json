@@ -22,6 +22,7 @@
     "@temporalio/client": "^1.13.2",
     "@temporalio/worker": "^1.13.2",
     "@temporalio/workflow": "^1.13.2",
+    "@toon-format/toon": "^2.0.1",
     "canvas": "^3.2.0",
     "chart.js": "^4.5.1",
     "chartjs-node-canvas": "^5.0.0",

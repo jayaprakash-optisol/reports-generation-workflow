@@ -29,11 +29,11 @@ import { storage } from '../utils/storage.js';
 
 const logger = createModuleLogger('docx-generator');
 
-// Style configurations for DOCX
+// Modern style configurations for DOCX matching dashboard design
 const STYLE_COLORS: Record<ReportStyle, { primary: string; secondary: string; accent: string }> = {
-  business: { primary: '1a365d', secondary: '2b6cb0', accent: 'ed8936' },
-  research: { primary: '2d3748', secondary: '4a5568', accent: '3182ce' },
-  technical: { primary: '0d1117', secondary: '161b22', accent: '58a6ff' },
+  business: { primary: '667eea', secondary: '764ba2', accent: 'f093fb' },
+  research: { primary: '4facfe', secondary: '00f2fe', accent: '11998e' },
+  technical: { primary: '0d1117', secondary: '24292f', accent: '58a6ff' },
 };
 
 export class DOCXGenerator {
@@ -62,11 +62,60 @@ export class DOCXGenerator {
             next: 'Normal',
             quickFormat: true,
             run: {
-              font: 'Arial',
+              font: 'Calibri',
               size: 24,
+              color: '24292f',
             },
             paragraph: {
-              spacing: { after: 200, line: 276 },
+              spacing: { after: 240, line: 300 },
+            },
+          },
+          {
+            id: 'Heading1',
+            name: 'Heading 1',
+            basedOn: 'Normal',
+            next: 'Normal',
+            quickFormat: true,
+            run: {
+              font: 'Calibri Light',
+              size: 56,
+              bold: true,
+              color: colors.primary,
+            },
+            paragraph: {
+              spacing: { before: 480, after: 240 },
+            },
+          },
+          {
+            id: 'Heading2',
+            name: 'Heading 2',
+            basedOn: 'Normal',
+            next: 'Normal',
+            quickFormat: true,
+            run: {
+              font: 'Calibri Light',
+              size: 36,
+              bold: true,
+              color: colors.primary,
+            },
+            paragraph: {
+              spacing: { before: 360, after: 180 },
+            },
+          },
+          {
+            id: 'Subtitle',
+            name: 'Subtitle',
+            basedOn: 'Normal',
+            next: 'Normal',
+            quickFormat: true,
+            run: {
+              font: 'Calibri',
+              size: 28,
+              italics: true,
+              color: '718096',
+            },
+            paragraph: {
+              spacing: { after: 200 },
             },
           },
         ],

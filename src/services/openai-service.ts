@@ -5,6 +5,7 @@ import OpenAI from 'openai';
 import { config } from '../config/index.js';
 import type { DataProfile, GeneratedNarrative, ReportStyle } from '../types/index.js';
 import { createModuleLogger } from '../utils/logger.js';
+import { toonUtils } from '../utils/toon.js';
 
 const logger = createModuleLogger('openai-service');
 
@@ -38,6 +39,18 @@ ${stylePrompt}
 
 Your task is to generate professional, insightful content for a report titled "${title}".
 ${customInstructions ? `\nAdditional instructions: ${customInstructions}` : ''}
+
+IMPORTANT: The data context below uses TOON format (Token-Oriented Object Notation) - a compact,
+schema-aware data format. TOON uses this pattern:
+- Header line: arrayName[count]{field1,field2,...}:
+- Data rows: value1,value2,... (one row per line, comma-separated)
+
+Example TOON:
+users[2]{id,name,role}:
+  1,Alice,admin
+  2,Bob,user
+
+Parse TOON data naturally - it's self-documenting once you see the header.
 
 Respond with valid JSON in this exact format:
 {
@@ -211,41 +224,84 @@ Focus on performance data, error analysis, and root causes. Use technical termin
   }
 
   /**
-   * Build data context string for LLM
+   * Build data context string for LLM using TOON format for efficiency
+   * TOON reduces token usage by ~40-60% compared to JSON
+   * @see https://github.com/toon-format/toon
    */
   private buildDataContext(
     dataProfile: DataProfile,
     parsedData: Record<string, unknown>[],
     textContent: string[]
   ): string {
-    let context = '';
+    // Build metadata object
+    const metadata = {
+      rows: dataProfile.rowCount,
+      columns: dataProfile.columnCount,
+      qualityScore: dataProfile.dataQualityScore,
+    };
 
-    // Data structure
-    context += `Dataset: ${dataProfile.rowCount} rows, ${dataProfile.columnCount} columns\n`;
-    context += `Data Quality Score: ${dataProfile.dataQualityScore}/100\n\n`;
+    // Build column profiles in TOON-friendly format
+    const columnProfiles = dataProfile.columns.map(col => ({
+      name: col.name,
+      type: col.type,
+      ...(col.type === 'numeric' && {
+        min: col.min,
+        max: col.max,
+        mean: col.mean ? Number(col.mean.toFixed(2)) : undefined,
+        stdDev: col.stdDev ? Number(col.stdDev.toFixed(2)) : undefined,
+      }),
+      ...(col.uniqueCount && { unique: col.uniqueCount }),
+      ...(col.topValues &&
+        col.topValues.length > 0 && {
+          top: col.topValues.slice(0, 5).map(v => `${v.value}(${v.count})`),
+        }),
+      ...(col.nullCount && col.nullCount > 0 && { nulls: col.nullCount }),
+    }));
 
-    // Column summaries
-    context += 'Columns:\n';
-    for (const col of dataProfile.columns) {
-      context += `- ${col.name} (${col.type}): `;
-      if (col.type === 'numeric') {
-        context += `min=${col.min}, max=${col.max}, mean=${col.mean?.toFixed(2)}\n`;
-      } else if (col.topValues) {
-        context += `top values: ${col.topValues.map(v => v.value).join(', ')}\n`;
-      } else {
-        context += `${col.uniqueCount} unique values\n`;
-      }
-    }
+    // Use TOON format for data context (more token-efficient)
+    let context = `DATASET METADATA (TOON format - compact data representation):
+\`\`\`toon
+${toonUtils.encode(metadata)}
+\`\`\`
 
-    // Sample data
+COLUMN PROFILES:
+\`\`\`toon
+${toonUtils.encode(columnProfiles)}
+\`\`\``;
+
+    // Sample data in TOON format
     if (parsedData.length > 0) {
-      context += '\nSample data (first 5 rows):\n';
-      context += JSON.stringify(parsedData.slice(0, 5), null, 2);
+      const sampleData = parsedData.slice(0, 5);
+      context += `
+
+SAMPLE DATA (first 5 rows):
+\`\`\`toon
+${toonUtils.encode(sampleData)}
+\`\`\``;
+
+      // Log token savings estimate
+      const jsonVersion = JSON.stringify(sampleData, null, 2);
+      const toonVersion = toonUtils.encode(sampleData);
+      const savings = toonUtils.estimateTokenSavings(jsonVersion, toonVersion);
+      logger.info(`TOON format saved ~${savings.percentage}% tokens for sample data`, {
+        jsonTokens: savings.jsonTokens,
+        toonTokens: savings.toonTokens,
+      });
     }
 
-    // Text content
+    // Chart suggestions if available
+    if (dataProfile.suggestedCharts && dataProfile.suggestedCharts.length > 0) {
+      context += `
+
+SUGGESTED VISUALIZATIONS:
+\`\`\`toon
+${toonUtils.encode(dataProfile.suggestedCharts.slice(0, 5))}
+\`\`\``;
+    }
+
+    // Text content (keep as plain text for readability)
     if (textContent.length > 0) {
-      context += '\n\nAdditional context:\n';
+      context += '\n\nADDITIONAL CONTEXT:\n';
       context += textContent.slice(0, 3).join('\n---\n');
     }
 
