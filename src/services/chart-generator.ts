@@ -1,16 +1,16 @@
-import { ChartJSNodeCanvas } from 'chartjs-node-canvas';
 import type { ChartConfiguration, ChartType as ChartJSType } from 'chart.js';
+import { ChartJSNodeCanvas } from 'chartjs-node-canvas';
 import { nanoid } from 'nanoid';
-import {
+
+import type {
   ChartConfig,
-  ChartType,
   ChartSuggestion,
-  GeneratedChart,
+  ChartType,
   DataProfile,
-  ColumnProfile,
+  GeneratedChart,
 } from '../types/index.js';
-import { storage } from '../utils/storage.js';
 import { createModuleLogger } from '../utils/logger.js';
+import { storage } from '../utils/storage.js';
 
 const logger = createModuleLogger('chart-generator');
 
@@ -21,19 +21,23 @@ const CHART_COLORS = {
   accent: ['#ed8936', '#dd6b20', '#c05621', '#9c4221'],
   neutral: ['#718096', '#4a5568', '#2d3748', '#1a202c'],
   full: [
-    '#3182ce', '#48bb78', '#ed8936', '#e53e3e', '#805ad5',
-    '#38b2ac', '#d69e2e', '#dd6b20', '#3182ce', '#718096',
+    '#3182ce',
+    '#48bb78',
+    '#ed8936',
+    '#e53e3e',
+    '#805ad5',
+    '#38b2ac',
+    '#d69e2e',
+    '#dd6b20',
+    '#3182ce',
+    '#718096',
   ],
 };
 
 export class ChartGenerator {
-  private chartJSNodeCanvas: ChartJSNodeCanvas;
-  private width: number;
-  private height: number;
+  private readonly chartJSNodeCanvas: ChartJSNodeCanvas;
 
   constructor(width = 800, height = 500) {
-    this.width = width;
-    this.height = height;
     this.chartJSNodeCanvas = new ChartJSNodeCanvas({
       width,
       height,
@@ -58,14 +62,14 @@ export class ChartGenerator {
         if (config) {
           const imageBuffer = await this.renderChart(config);
           const imagePath = await storage.saveChart(reportId, config.id, imageBuffer);
-          
+
           charts.push({
             id: config.id,
             config,
             imagePath,
             imageBase64: imageBuffer.toString('base64'),
           });
-          
+
           logger.debug(`Generated chart: ${config.title}`);
         }
       } catch (error) {
@@ -86,7 +90,7 @@ export class ChartGenerator {
     profile: DataProfile
   ): ChartConfig | null {
     const id = nanoid(10);
-    
+
     switch (suggestion.type) {
       case 'line':
         return this.buildLineChartConfig(id, suggestion, data, profile);
@@ -115,8 +119,8 @@ export class ChartGenerator {
     data: Record<string, unknown>[],
     _profile: DataProfile
   ): ChartConfig {
-    const xAxis = suggestion.xAxis || '';
-    const yAxis = Array.isArray(suggestion.yAxis) ? suggestion.yAxis[0] : suggestion.yAxis || '';
+    const xAxis = suggestion.xAxis ?? '';
+    const yAxis = Array.isArray(suggestion.yAxis) ? suggestion.yAxis[0] : (suggestion.yAxis ?? '');
 
     const sortedData = [...data].sort((a, b) => {
       const aVal = new Date(a[xAxis] as string).getTime();
@@ -133,12 +137,14 @@ export class ChartGenerator {
       title: suggestion.title,
       data: {
         labels,
-        datasets: [{
-          label: yAxis,
-          data: values,
-          borderColor: CHART_COLORS.primary[0],
-          backgroundColor: `${CHART_COLORS.primary[0]}20`,
-        }],
+        datasets: [
+          {
+            label: yAxis,
+            data: values,
+            borderColor: CHART_COLORS.primary[0],
+            backgroundColor: `${CHART_COLORS.primary[0]}20`,
+          },
+        ],
       },
       options: {
         xAxisLabel: xAxis,
@@ -158,8 +164,8 @@ export class ChartGenerator {
     data: Record<string, unknown>[],
     _profile: DataProfile
   ): ChartConfig {
-    const xAxis = suggestion.xAxis || '';
-    const yAxis = Array.isArray(suggestion.yAxis) ? suggestion.yAxis[0] : suggestion.yAxis || '';
+    const xAxis = suggestion.xAxis ?? '';
+    const yAxis = Array.isArray(suggestion.yAxis) ? suggestion.yAxis[0] : (suggestion.yAxis ?? '');
 
     // Aggregate data by category
     const aggregated = this.aggregateByCategory(data, xAxis, yAxis);
@@ -170,11 +176,13 @@ export class ChartGenerator {
       title: suggestion.title,
       data: {
         labels: aggregated.labels,
-        datasets: [{
-          label: yAxis,
-          data: aggregated.values,
-          backgroundColor: CHART_COLORS.full.slice(0, aggregated.labels.length),
-        }],
+        datasets: [
+          {
+            label: yAxis,
+            data: aggregated.values,
+            backgroundColor: CHART_COLORS.full.slice(0, aggregated.labels.length),
+          },
+        ],
       },
       options: {
         xAxisLabel: xAxis,
@@ -194,11 +202,11 @@ export class ChartGenerator {
     data: Record<string, unknown>[],
     _profile: DataProfile
   ): ChartConfig {
-    const xAxis = suggestion.xAxis || '';
-    const yAxes = Array.isArray(suggestion.yAxis) ? suggestion.yAxis : [suggestion.yAxis || ''];
+    const xAxis = suggestion.xAxis ?? '';
+    const yAxes = Array.isArray(suggestion.yAxis) ? suggestion.yAxis : [suggestion.yAxis ?? ''];
 
     const categories = [...new Set(data.map(row => String(row[xAxis])))];
-    
+
     const datasets = yAxes.map((yAxis, index) => {
       const values = categories.map(cat => {
         const rows = data.filter(row => String(row[xAxis]) === cat);
@@ -237,13 +245,13 @@ export class ChartGenerator {
     data: Record<string, unknown>[],
     _profile: DataProfile
   ): ChartConfig {
-    const xAxis = suggestion.xAxis || '';
+    const xAxis = suggestion.xAxis ?? '';
 
     // Count occurrences
     const counts = new Map<string, number>();
     for (const row of data) {
       const key = String(row[xAxis]);
-      counts.set(key, (counts.get(key) || 0) + 1);
+      counts.set(key, (counts.get(key) ?? 0) + 1);
     }
 
     const sortedEntries = Array.from(counts.entries())
@@ -256,11 +264,13 @@ export class ChartGenerator {
       title: suggestion.title,
       data: {
         labels: sortedEntries.map(([label]) => label),
-        datasets: [{
-          label: 'Distribution',
-          data: sortedEntries.map(([, count]) => count),
-          backgroundColor: CHART_COLORS.full.slice(0, sortedEntries.length),
-        }],
+        datasets: [
+          {
+            label: 'Distribution',
+            data: sortedEntries.map(([, count]) => count),
+            backgroundColor: CHART_COLORS.full.slice(0, sortedEntries.length),
+          },
+        ],
       },
       options: {
         showLegend: true,
@@ -304,10 +314,10 @@ export class ChartGenerator {
       pie: 'pie',
       donut: 'doughnut',
       area: 'line',
-      table: 'bar', // fallback
+      table: 'bar',
     };
 
-    const chartType = chartTypeMap[config.type] || 'bar';
+    const chartType = chartTypeMap[config.type];
 
     const chartConfig: ChartConfiguration = {
       type: chartType,
@@ -317,7 +327,7 @@ export class ChartGenerator {
           label: ds.label,
           data: ds.data,
           backgroundColor: ds.backgroundColor,
-          borderColor: ds.borderColor || ds.backgroundColor,
+          borderColor: ds.borderColor ?? ds.backgroundColor,
           borderWidth: chartType === 'line' ? 2 : 1,
           fill: config.type === 'area',
           tension: 0.3,
@@ -338,29 +348,32 @@ export class ChartGenerator {
             position: 'bottom',
           },
         },
-        scales: chartType === 'pie' || chartType === 'doughnut' ? undefined : {
-          x: {
-            title: {
-              display: !!config.options?.xAxisLabel,
-              text: config.options?.xAxisLabel || '',
-            },
-            grid: {
-              display: config.options?.showGrid ?? true,
-            },
-            stacked: config.type === 'stacked_bar',
-          },
-          y: {
-            title: {
-              display: !!config.options?.yAxisLabel,
-              text: config.options?.yAxisLabel || '',
-            },
-            grid: {
-              display: config.options?.showGrid ?? true,
-            },
-            stacked: config.type === 'stacked_bar',
-            beginAtZero: true,
-          },
-        },
+        scales:
+          chartType === 'pie' || chartType === 'doughnut'
+            ? undefined
+            : {
+                x: {
+                  title: {
+                    display: !!config.options?.xAxisLabel,
+                    text: config.options?.xAxisLabel ?? '',
+                  },
+                  grid: {
+                    display: config.options?.showGrid ?? true,
+                  },
+                  stacked: config.type === 'stacked_bar',
+                },
+                y: {
+                  title: {
+                    display: !!config.options?.yAxisLabel,
+                    text: config.options?.yAxisLabel ?? '',
+                  },
+                  grid: {
+                    display: config.options?.showGrid ?? true,
+                  },
+                  stacked: config.type === 'stacked_bar',
+                  beginAtZero: true,
+                },
+              },
       },
     };
 
@@ -380,7 +393,7 @@ export class ChartGenerator {
     for (const row of data) {
       const category = String(row[categoryKey]);
       const value = Number(row[valueKey]) || 0;
-      aggregated.set(category, (aggregated.get(category) || 0) + value);
+      aggregated.set(category, (aggregated.get(category) ?? 0) + value);
     }
 
     const sorted = Array.from(aggregated.entries())
@@ -400,7 +413,7 @@ export class ChartGenerator {
     if (value instanceof Date) {
       return value.toLocaleDateString();
     }
-    if (typeof value === 'string' && !isNaN(Date.parse(value))) {
+    if (typeof value === 'string' && !Number.isNaN(Date.parse(value))) {
       return new Date(value).toLocaleDateString();
     }
     return String(value);
@@ -411,14 +424,14 @@ export class ChartGenerator {
    */
   generateSummaryTable(profile: DataProfile): { headers: string[]; rows: string[][] } {
     const numericColumns = profile.columns.filter(col => col.type === 'numeric');
-    
+
     const headers = ['Metric', 'Min', 'Max', 'Mean', 'Std Dev'];
     const rows = numericColumns.map(col => [
       col.name,
-      col.min?.toString() || 'N/A',
-      col.max?.toString() || 'N/A',
-      col.mean?.toFixed(2) || 'N/A',
-      col.stdDev?.toFixed(2) || 'N/A',
+      col.min?.toString() ?? 'N/A',
+      col.max?.toString() ?? 'N/A',
+      col.mean?.toFixed(2) ?? 'N/A',
+      col.stdDev?.toFixed(2) ?? 'N/A',
     ]);
 
     return { headers, rows };
@@ -426,4 +439,3 @@ export class ChartGenerator {
 }
 
 export const chartGenerator = new ChartGenerator();
-

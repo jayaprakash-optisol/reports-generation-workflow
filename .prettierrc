@@ -4,6 +4,11 @@
   "tabWidth": 2,
   "trailingComma": "es5",
   "printWidth": 100,
-  "arrowParens": "avoid"
+  "arrowParens": "avoid",
+  "endOfLine": "lf",
+  "bracketSpacing": true,
+  "bracketSameLine": false,
+  "quoteProps": "as-needed",
+  "useTabs": false
 }
 

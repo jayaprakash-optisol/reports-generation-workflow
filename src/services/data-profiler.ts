@@ -1,13 +1,14 @@
 import { parse } from 'csv-parse/sync';
-import {
+
+import type {
+  ChartSuggestion,
+  ChartType,
+  ColumnProfile,
+  ColumnType,
+  DataProfile,
   InputData,
   StructuredData,
   UnstructuredData,
-  DataProfile,
-  ColumnProfile,
-  ColumnType,
-  ChartSuggestion,
-  ChartType,
 } from '../types/index.js';
 import { createModuleLogger } from '../utils/logger.js';
 
@@ -100,12 +101,12 @@ export class DataProfiler {
    */
   private profileColumns(records: Record<string, unknown>[]): ColumnProfile[] {
     const columnNames = Object.keys(records[0] || {});
-    
+
     return columnNames.map(name => {
       const values = records.map(r => r[name]);
       const type = this.inferColumnType(values);
       const nonNullValues = values.filter(v => v !== null && v !== undefined && v !== '');
-      
+
       const profile: ColumnProfile = {
         name,
         type,
@@ -127,8 +128,8 @@ export class DataProfiler {
       } else if (type === 'datetime') {
         const dates = nonNullValues.filter(v => v instanceof Date) as Date[];
         if (dates.length > 0) {
-          profile.min = dates.reduce((a, b) => a < b ? a : b).toISOString();
-          profile.max = dates.reduce((a, b) => a > b ? a : b).toISOString();
+          profile.min = dates.reduce((a, b) => (a < b ? a : b)).toISOString();
+          profile.max = dates.reduce((a, b) => (a > b ? a : b)).toISOString();
         }
       }
 
@@ -141,7 +142,7 @@ export class DataProfiler {
    */
   private inferColumnType(values: unknown[]): ColumnType {
     const nonNullValues = values.filter(v => v !== null && v !== undefined && v !== '');
-    
+
     if (nonNullValues.length === 0) return 'unknown';
 
     // Check for dates
@@ -153,8 +154,8 @@ export class DataProfiler {
     if (boolCount / nonNullValues.length > 0.8) return 'boolean';
 
     // Check for numbers
-    const numCount = nonNullValues.filter(v => 
-      typeof v === 'number' || (typeof v === 'string' && !isNaN(Number(v)) && v.trim() !== '')
+    const numCount = nonNullValues.filter(
+      v => typeof v === 'number' || (typeof v === 'string' && !isNaN(Number(v)) && v.trim() !== '')
     ).length;
     if (numCount / nonNullValues.length > 0.8) return 'numeric';
 
@@ -171,7 +172,7 @@ export class DataProfiler {
   private isDateString(value: unknown): boolean {
     if (typeof value !== 'string') return false;
     const date = new Date(value);
-    return !isNaN(date.getTime()) && value.match(/\d{4}[-/]\d{1,2}[-/]\d{1,2}/) !== null;
+    return !Number.isNaN(date.getTime()) && value.match(/\d{4}[-/]\d{1,2}[-/]\d{1,2}/) !== null;
   }
 
   /**
@@ -187,7 +188,8 @@ export class DataProfiler {
    * Calculate standard deviation
    */
   private calculateStdDev(numbers: number[], mean: number): number {
-    const variance = numbers.reduce((acc, val) => acc + Math.pow(val - mean, 2), 0) / numbers.length;
+    const variance =
+      numbers.reduce((acc, val) => acc + Math.pow(val - mean, 2), 0) / numbers.length;
     return Math.sqrt(variance);
   }
 
@@ -197,9 +199,9 @@ export class DataProfiler {
   private getTopValues(values: string[], n: number): Array<{ value: string; count: number }> {
     const counts = new Map<string, number>();
     for (const v of values) {
-      counts.set(v, (counts.get(v) || 0) + 1);
+      counts.set(v, (counts.get(v) ?? 0) + 1);
     }
-    
+
     return Array.from(counts.entries())
       .sort((a, b) => b[1] - a[1])
       .slice(0, n)
@@ -209,9 +211,12 @@ export class DataProfiler {
   /**
    * Suggest appropriate charts based on data profile
    */
-  private suggestCharts(columns: ColumnProfile[], records: Record<string, unknown>[]): ChartSuggestion[] {
+  private suggestCharts(
+    columns: ColumnProfile[],
+    records: Record<string, unknown>[]
+  ): ChartSuggestion[] {
     const suggestions: ChartSuggestion[] = [];
-    
+
     const dateColumns = columns.filter(c => c.type === 'datetime');
     const numericColumns = columns.filter(c => c.type === 'numeric');
     const categoricalColumns = columns.filter(c => c.type === 'categorical');
@@ -298,8 +303,9 @@ export class DataProfiler {
     // Penalize for low uniqueness in non-categorical columns
     const nonCatColumns = columns.filter(c => c.type !== 'categorical');
     if (nonCatColumns.length > 0) {
-      const avgUniqueness = nonCatColumns.reduce((sum, col) => 
-        sum + col.uniqueCount / rowCount, 0) / nonCatColumns.length;
+      const avgUniqueness =
+        nonCatColumns.reduce((sum, col) => sum + col.uniqueCount / rowCount, 0) /
+        nonCatColumns.length;
       if (avgUniqueness < 0.1) score -= 20;
     }
 
@@ -312,4 +318,3 @@ export class DataProfiler {
 }
 
 export const dataProfiler = new DataProfiler();
-

@@ -1,7 +1,10 @@
+/* eslint-disable @typescript-eslint/no-unnecessary-condition */
+
 import OpenAI from 'openai';
+
 import { config } from '../config/index.js';
+import type { DataProfile, GeneratedNarrative, ReportStyle } from '../types/index.js';
 import { createModuleLogger } from '../utils/logger.js';
-import { ReportStyle, DataProfile, GeneratedNarrative } from '../types/index.js';
 
 const logger = createModuleLogger('openai-service');
 
@@ -30,7 +33,7 @@ export class OpenAIService {
     const stylePrompt = this.getStylePrompt(style);
     const dataContext = this.buildDataContext(dataProfile, parsedData, textContent);
 
-    const systemPrompt = `You are an expert report writer specializing in ${style} reports. 
+    const systemPrompt = `You are an expert report writer specializing in ${style} reports.
 ${stylePrompt}
 
 Your task is to generate professional, insightful content for a report titled "${title}".
@@ -114,7 +117,7 @@ Write 2-4 paragraphs of professional, insightful content. Be specific and data-d
       max_tokens: 1000,
     });
 
-    return response.choices[0]?.message?.content || '';
+    return response.choices[0]?.message?.content ?? '';
   }
 
   /**
@@ -143,7 +146,7 @@ Be concise and insight-driven.`;
       max_tokens: 500,
     });
 
-    return response.choices[0]?.message?.content || '';
+    return response.choices[0]?.message?.content ?? '';
   }
 
   /**
@@ -185,7 +188,7 @@ Be concise and insight-driven.`;
       technical: 'technology, engineering, circuit patterns, modern',
     };
 
-    return `Abstract ${styleDescriptions[style]} illustration representing "${title}". 
+    return `Abstract ${styleDescriptions[style]} illustration representing "${title}".
 No text in image. Suitable as report cover background.`;
   }
 
@@ -194,7 +197,7 @@ No text in image. Suitable as report cover background.`;
    */
   private getStylePrompt(style: ReportStyle): string {
     const prompts = {
-      business: `Write in a concise, executive-friendly tone. Focus on KPIs, trends, risks, and actionable recommendations. 
+      business: `Write in a concise, executive-friendly tone. Focus on KPIs, trends, risks, and actionable recommendations.
 Lead with insights, put details in context. Use clear business language.`,
 
       research: `Write in a formal, structured academic tone. Include methodology considerations.
@@ -255,15 +258,15 @@ Focus on performance data, error analysis, and root causes. Use technical termin
   private validateAndCleanNarrative(narrative: GeneratedNarrative): GeneratedNarrative {
     // Ensure all required fields exist
     return {
-      executiveSummary: narrative.executiveSummary || 'Executive summary not available.',
-      sections: (narrative.sections || []).map((section, index) => ({
-        sectionId: section.sectionId || `section-${index + 1}`,
-        sectionTitle: section.sectionTitle || `Section ${index + 1}`,
-        content: section.content || '',
-        order: section.order || index + 1,
+      executiveSummary: narrative.executiveSummary ?? 'Executive summary not available.',
+      sections: (narrative.sections ?? []).map((section, index) => ({
+        sectionId: section.sectionId ?? `section-${index + 1}`,
+        sectionTitle: section.sectionTitle ?? `Section ${index + 1}`,
+        content: section.content ?? '',
+        order: section.order ?? index + 1,
       })),
-      recommendations: narrative.recommendations || [],
-      keyFindings: narrative.keyFindings || [],
+      recommendations: narrative.recommendations ?? [],
+      keyFindings: narrative.keyFindings ?? [],
     };
   }
 }

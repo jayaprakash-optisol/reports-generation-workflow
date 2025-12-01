@@ -1,15 +1,15 @@
-import {
-  Report,
-  ReportSection,
-  ReportStyle,
+import type {
   Branding,
-  GeneratedNarrative,
-  GeneratedChart,
   DataProfile,
+  GeneratedChart,
+  GeneratedNarrative,
+  Report,
   TableData,
 } from '../types/index.js';
-import { getStyleConfig, applyBrandingToStyle, generateCSS, StyleConfig } from './styles.js';
 import { createModuleLogger } from '../utils/logger.js';
+
+import type { StyleConfig } from './styles.js';
+import { applyBrandingToStyle, generateCSS, getStyleConfig } from './styles.js';
 
 const logger = createModuleLogger('html-generator');
 
@@ -24,25 +24,11 @@ export class HTMLGenerator {
     dataProfile: DataProfile,
     branding?: Branding
   ): string {
-    const styleConfig = applyBrandingToStyle(
-      getStyleConfig(report.style),
-      branding
-    );
+    const styleConfig = applyBrandingToStyle(getStyleConfig(report.style), branding);
 
-    const sections = this.buildSections(
-      styleConfig,
-      report,
-      narrative,
-      charts,
-      dataProfile
-    );
+    const sections = this.buildSections(styleConfig, report, narrative, charts, dataProfile);
 
-    const html = this.wrapInDocument(
-      report.title,
-      styleConfig,
-      sections,
-      branding
-    );
+    const html = this.wrapInDocument(report.title, styleConfig, sections, branding);
 
     logger.info(`Generated HTML report: ${report.title}`);
     return html;
@@ -58,41 +44,37 @@ export class HTMLGenerator {
     charts: GeneratedChart[],
     dataProfile: DataProfile
   ): string {
-    const sections: string[] = [];
-
-    // Cover page
-    sections.push(this.generateCoverPage(report, styleConfig));
-
-    // Table of contents
-    sections.push(this.generateTableOfContents(styleConfig, narrative));
-
     // Executive summary / Abstract
     const summaryTitle = report.style === 'research' ? 'Abstract' : 'Executive Summary';
-    sections.push(this.generateTextSection(summaryTitle, narrative.executiveSummary, 'executive-summary'));
-
-    // Key findings
-    if (narrative.keyFindings.length > 0) {
-      sections.push(this.generateKeyFindings(narrative.keyFindings));
-    }
 
     // Generated narrative sections with charts
     let chartIndex = 0;
-    for (const section of narrative.sections) {
+    const narrativeSections = narrative.sections.map(section => {
       const sectionCharts = charts.slice(chartIndex, chartIndex + 2);
       chartIndex += 2;
-      
-      sections.push(this.generateMixedSection(section, sectionCharts));
-    }
+      return this.generateMixedSection(section, sectionCharts);
+    });
 
-    // Recommendations
-    if (narrative.recommendations.length > 0) {
-      sections.push(this.generateRecommendations(narrative.recommendations));
-    }
-
-    // Summary statistics table
-    if (dataProfile.columns.length > 0) {
-      sections.push(this.generateStatisticsTable(dataProfile));
-    }
+    const sections = [
+      // Cover page
+      this.generateCoverPage(report, styleConfig),
+      // Table of contents
+      this.generateTableOfContents(styleConfig, narrative),
+      // Executive summary / Abstract
+      this.generateTextSection(summaryTitle, narrative.executiveSummary, 'executive-summary'),
+      // Key findings
+      ...(narrative.keyFindings.length > 0
+        ? [this.generateKeyFindings(narrative.keyFindings)]
+        : []),
+      // Generated narrative sections with charts
+      ...narrativeSections,
+      // Recommendations
+      ...(narrative.recommendations.length > 0
+        ? [this.generateRecommendations(narrative.recommendations)]
+        : []),
+      // Summary statistics table
+      ...(dataProfile.columns.length > 0 ? [this.generateStatisticsTable(dataProfile)] : []),
+    ];
 
     return sections.join('\n');
   }
@@ -122,18 +104,17 @@ export class HTMLGenerator {
   /**
    * Generate table of contents
    */
-  private generateTableOfContents(
-    styleConfig: StyleConfig,
-    narrative: GeneratedNarrative
-  ): string {
+  private generateTableOfContents(styleConfig: StyleConfig, narrative: GeneratedNarrative): string {
     const items = styleConfig.sections
       .filter(s => s.required || narrative.sections.some(ns => ns.sectionId === s.id))
-      .map((section, index) => `
+      .map(
+        (section, index) => `
         <div class="toc-item">
           <span>${section.title}</span>
           <span>${index + 1}</span>
         </div>
-      `)
+      `
+      )
       .join('');
 
     return `
@@ -181,9 +162,7 @@ export class HTMLGenerator {
     section: { sectionTitle: string; content: string },
     charts: GeneratedChart[]
   ): string {
-    const chartsHtml = charts
-      .map(chart => this.generateChartEmbed(chart))
-      .join('');
+    const chartsHtml = charts.map(chart => this.generateChartEmbed(chart)).join('');
 
     return `
       <div class="section">
@@ -214,9 +193,7 @@ export class HTMLGenerator {
    * Generate recommendations section
    */
   private generateRecommendations(recommendations: string[]): string {
-    const items = recommendations
-      .map(rec => `<li>${this.escapeHtml(rec)}</li>`)
-      .join('');
+    const items = recommendations.map(rec => `<li>${this.escapeHtml(rec)}</li>`).join('');
 
     return `
       <div class="section">
@@ -233,13 +210,14 @@ export class HTMLGenerator {
    */
   private generateStatisticsTable(dataProfile: DataProfile): string {
     const numericColumns = dataProfile.columns.filter(col => col.type === 'numeric');
-    
+
     if (numericColumns.length === 0) {
       return '';
     }
 
     const rows = numericColumns
-      .map(col => `
+      .map(
+        col => `
         <tr>
           <td>${this.escapeHtml(col.name)}</td>
           <td>${col.min?.toLocaleString() ?? 'N/A'}</td>
@@ -247,7 +225,8 @@ export class HTMLGenerator {
           <td>${col.mean?.toFixed(2) ?? 'N/A'}</td>
           <td>${col.stdDev?.toFixed(2) ?? 'N/A'}</td>
         </tr>
-      `)
+      `
+      )
       .join('');
 
     return `
@@ -276,12 +255,13 @@ export class HTMLGenerator {
    * Generate generic table
    */
   generateTable(tableData: TableData): string {
-    const headers = tableData.headers
-      .map(h => `<th>${this.escapeHtml(h)}</th>`)
-      .join('');
+    const headers = tableData.headers.map(h => `<th>${this.escapeHtml(h)}</th>`).join('');
 
     const rows = tableData.rows
-      .map(row => `<tr>${row.map(cell => `<td>${this.escapeHtml(cell)}</td>`).join('')}</tr>`)
+      .map(row => {
+        const cells = row.map(cell => `<td>${this.escapeHtml(cell)}</td>`).join('');
+        return `<tr>${cells}</tr>`;
+      })
       .join('');
 
     return `
@@ -318,7 +298,7 @@ export class HTMLGenerator {
     ${content}
   </div>
   <div class="page-footer">
-    <span>${branding?.companyName || 'AI Report Generator'}</span>
+    <span>${branding?.companyName ?? 'AI Report Generator'}</span>
     <span>Generated ${new Date().toISOString()}</span>
   </div>
 </body>
@@ -340,14 +320,13 @@ export class HTMLGenerator {
    * Escape HTML special characters
    */
   private escapeHtml(text: string): string {
-    const htmlEntities: Record<string, string> = {
-      '&': '&amp;',
-      '<': '&lt;',
-      '>': '&gt;',
-      '"': '&quot;',
-      "'": '&#39;',
-    };
-    return text.replace(/[&<>"']/g, char => htmlEntities[char] || char);
+    // Replace & first to avoid double-encoding
+    return text
+      .replaceAll('&', '&amp;')
+      .replaceAll('<', '&lt;')
+      .replaceAll('>', '&gt;')
+      .replaceAll('"', '&quot;')
+      .replaceAll("'", '&#39;');
   }
 
   /**
@@ -359,4 +338,3 @@ export class HTMLGenerator {
 }
 
 export const htmlGenerator = new HTMLGenerator();
-

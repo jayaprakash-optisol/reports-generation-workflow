@@ -1,24 +1,20 @@
-import { Router, Request, Response, NextFunction } from 'express';
+import type { NextFunction, Request, Response } from 'express';
+import { Router } from 'express';
 import { body, param, query, validationResult } from 'express-validator';
 import multer from 'multer';
-import {
-  startReportGeneration,
-  getWorkflowStatus,
-  getWorkflowProgress,
-  cancelWorkflow,
-  waitForWorkflowResult,
-  getWorkflowInfo,
-} from '../temporal/client.js';
-import { storage } from '../utils/storage.js';
-import { createModuleLogger } from '../utils/logger.js';
+
 import { config } from '../config/index.js';
 import {
-  CreateReportRequestSchema,
-  InputData,
-  ReportConfig,
-  Report,
-  OutputFormat,
-} from '../types/index.js';
+  cancelWorkflow,
+  getWorkflowInfo,
+  getWorkflowStatus,
+  startReportGeneration,
+  waitForWorkflowResult,
+} from '../temporal/client.js';
+import type { InputData, OutputFormat, Report, ReportConfig } from '../types/index.js';
+import { CreateReportRequestSchema } from '../types/index.js';
+import { createModuleLogger } from '../utils/logger.js';
+import { storage } from '../utils/storage.js';
 
 const logger = createModuleLogger('api-routes');
 const router = Router();
@@ -30,12 +26,7 @@ const upload = multer({
     fileSize: config.report.maxUploadSizeMB * 1024 * 1024,
   },
   fileFilter: (_req, file, cb) => {
-    const allowedMimes = [
-      'text/csv',
-      'application/json',
-      'text/plain',
-      'text/markdown',
-    ];
+    const allowedMimes = ['text/csv', 'application/json', 'text/plain', 'text/markdown'];
     if (allowedMimes.includes(file.mimetype)) {
       cb(null, true);
     } else {
@@ -64,22 +55,18 @@ router.post(
   [
     body('data').isArray({ min: 1 }).withMessage('Data array is required'),
     body('config.title').isString().trim().isLength({ min: 1, max: 200 }),
-    body('config.style')
-      .optional()
-      .isIn(['business', 'research', 'technical']),
+    body('config.style').optional().isIn(['business', 'research', 'technical']),
     body('config.outputFormats')
       .optional()
       .isArray()
-      .custom((value: string[]) => 
-        value.every(v => ['PDF', 'DOCX', 'HTML'].includes(v))
-      ),
+      .custom((value: string[]) => value.every(v => ['PDF', 'DOCX', 'HTML'].includes(v))),
   ],
   validate,
   async (req: Request, res: Response) => {
     try {
       // Validate request body with Zod
       const parseResult = CreateReportRequestSchema.safeParse(req.body);
-      
+
       if (!parseResult.success) {
         return res.status(400).json({
           error: 'Invalid request body',
@@ -129,8 +116,8 @@ router.post(
   async (req: Request, res: Response) => {
     try {
       const files = req.files as Express.Multer.File[];
-      
-      if (!files || files.length === 0) {
+
+      if (files.length === 0) {
         return res.status(400).json({ error: 'No files uploaded' });
       }
 
@@ -143,13 +130,13 @@ router.post(
         if (isJson || isCsv) {
           return {
             type: 'structured' as const,
-            format: isJson ? 'json' as const : 'csv' as const,
+            format: isJson ? ('json' as const) : ('csv' as const),
             data: content,
           };
         } else {
           return {
             type: 'unstructured' as const,
-            format: file.mimetype.includes('markdown') ? 'markdown' as const : 'text' as const,
+            format: file.mimetype.includes('markdown') ? ('markdown' as const) : ('text' as const),
             content,
           };
         }
@@ -161,13 +148,15 @@ router.post(
         try {
           outputFormats = JSON.parse(req.body.outputFormats);
         } catch {
-          outputFormats = req.body.outputFormats.split(',').map((f: string) => f.trim().toUpperCase()) as OutputFormat[];
+          outputFormats = req.body.outputFormats
+            .split(',')
+            .map((f: string) => f.trim().toUpperCase()) as OutputFormat[];
         }
       }
 
       const reportConfig: ReportConfig = {
         title: req.body.title,
-        style: req.body.style || config.report.defaultStyle,
+        style: req.body.style ?? config.report.defaultStyle,
         outputFormats,
         branding: req.body.branding ? JSON.parse(req.body.branding) : undefined,
       };
@@ -208,7 +197,7 @@ router.get(
       const workflowId = `report-${reportId}`;
 
       // Get report from storage
-      const storedReport = await storage.getReport(reportId) as Report | null;
+      const storedReport = (await storage.getReport(reportId)) as Report | null;
 
       // Get workflow status
       const workflowStatus = await getWorkflowStatus(workflowId);
@@ -302,10 +291,10 @@ router.get(
 router.get('/reports', async (_req: Request, res: Response) => {
   try {
     const reportIds = await storage.listReports();
-    
+
     const reports = await Promise.all(
       reportIds.map(async id => {
-        const report = await storage.getReport(id) as Report | null;
+        const report = (await storage.getReport(id)) as Report | null;
         return report;
       })
     );
@@ -395,4 +384,3 @@ router.get('/health', (_req: Request, res: Response) => {
 });
 
 export default router;
-

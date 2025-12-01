@@ -1,4 +1,6 @@
-import { ReportStyle, Branding } from '../types/index.js';
+/* eslint-disable @typescript-eslint/no-unnecessary-condition */
+// Branding fields are optional, so nullish coalescing is needed for optional Zod fields
+import type { Branding, ReportStyle } from '../types/index.js';
 
 export interface StyleConfig {
   name: string;
@@ -58,12 +60,54 @@ const businessStyle: StyleConfig = {
   sections: [
     { id: 'cover', title: 'Cover Page', type: 'mixed', required: true, order: 0 },
     { id: 'toc', title: 'Table of Contents', type: 'text', required: true, order: 1 },
-    { id: 'executive-summary', title: 'Executive Summary', type: 'text', required: true, order: 2, promptHint: 'Concise overview for executives' },
-    { id: 'key-metrics', title: 'Key Performance Indicators', type: 'mixed', required: true, order: 3, promptHint: 'Critical KPIs and metrics' },
-    { id: 'trends', title: 'Trends & Analysis', type: 'mixed', required: true, order: 4, promptHint: 'Trend analysis with visualizations' },
-    { id: 'risks', title: 'Risks & Challenges', type: 'text', required: false, order: 5, promptHint: 'Identified risks and mitigation' },
-    { id: 'opportunities', title: 'Opportunities', type: 'text', required: false, order: 6, promptHint: 'Growth opportunities and potential' },
-    { id: 'recommendations', title: 'Recommendations', type: 'text', required: true, order: 7, promptHint: 'Actionable recommendations' },
+    {
+      id: 'executive-summary',
+      title: 'Executive Summary',
+      type: 'text',
+      required: true,
+      order: 2,
+      promptHint: 'Concise overview for executives',
+    },
+    {
+      id: 'key-metrics',
+      title: 'Key Performance Indicators',
+      type: 'mixed',
+      required: true,
+      order: 3,
+      promptHint: 'Critical KPIs and metrics',
+    },
+    {
+      id: 'trends',
+      title: 'Trends & Analysis',
+      type: 'mixed',
+      required: true,
+      order: 4,
+      promptHint: 'Trend analysis with visualizations',
+    },
+    {
+      id: 'risks',
+      title: 'Risks & Challenges',
+      type: 'text',
+      required: false,
+      order: 5,
+      promptHint: 'Identified risks and mitigation',
+    },
+    {
+      id: 'opportunities',
+      title: 'Opportunities',
+      type: 'text',
+      required: false,
+      order: 6,
+      promptHint: 'Growth opportunities and potential',
+    },
+    {
+      id: 'recommendations',
+      title: 'Recommendations',
+      type: 'text',
+      required: true,
+      order: 7,
+      promptHint: 'Actionable recommendations',
+    },
     { id: 'appendix', title: 'Appendix', type: 'table', required: false, order: 8 },
   ],
   colors: {
@@ -105,13 +149,62 @@ const researchStyle: StyleConfig = {
   sections: [
     { id: 'cover', title: 'Cover Page', type: 'mixed', required: true, order: 0 },
     { id: 'toc', title: 'Table of Contents', type: 'text', required: true, order: 1 },
-    { id: 'abstract', title: 'Abstract', type: 'text', required: true, order: 2, promptHint: 'Formal research abstract' },
-    { id: 'introduction', title: 'Introduction', type: 'text', required: true, order: 3, promptHint: 'Background and research context' },
-    { id: 'methodology', title: 'Methodology', type: 'text', required: true, order: 4, promptHint: 'Data collection and analysis methods' },
-    { id: 'results', title: 'Results', type: 'mixed', required: true, order: 5, promptHint: 'Key findings with supporting data' },
-    { id: 'discussion', title: 'Discussion', type: 'text', required: true, order: 6, promptHint: 'Interpretation and implications' },
-    { id: 'limitations', title: 'Limitations', type: 'text', required: false, order: 7, promptHint: 'Study limitations and caveats' },
-    { id: 'conclusion', title: 'Conclusion', type: 'text', required: true, order: 8, promptHint: 'Summary and future directions' },
+    {
+      id: 'abstract',
+      title: 'Abstract',
+      type: 'text',
+      required: true,
+      order: 2,
+      promptHint: 'Formal research abstract',
+    },
+    {
+      id: 'introduction',
+      title: 'Introduction',
+      type: 'text',
+      required: true,
+      order: 3,
+      promptHint: 'Background and research context',
+    },
+    {
+      id: 'methodology',
+      title: 'Methodology',
+      type: 'text',
+      required: true,
+      order: 4,
+      promptHint: 'Data collection and analysis methods',
+    },
+    {
+      id: 'results',
+      title: 'Results',
+      type: 'mixed',
+      required: true,
+      order: 5,
+      promptHint: 'Key findings with supporting data',
+    },
+    {
+      id: 'discussion',
+      title: 'Discussion',
+      type: 'text',
+      required: true,
+      order: 6,
+      promptHint: 'Interpretation and implications',
+    },
+    {
+      id: 'limitations',
+      title: 'Limitations',
+      type: 'text',
+      required: false,
+      order: 7,
+      promptHint: 'Study limitations and caveats',
+    },
+    {
+      id: 'conclusion',
+      title: 'Conclusion',
+      type: 'text',
+      required: true,
+      order: 8,
+      promptHint: 'Summary and future directions',
+    },
     { id: 'references', title: 'References', type: 'text', required: false, order: 9 },
     { id: 'appendix', title: 'Appendix', type: 'table', required: false, order: 10 },
   ],
@@ -154,13 +247,62 @@ const technicalStyle: StyleConfig = {
   sections: [
     { id: 'cover', title: 'Cover Page', type: 'mixed', required: true, order: 0 },
     { id: 'toc', title: 'Table of Contents', type: 'text', required: true, order: 1 },
-    { id: 'overview', title: 'Overview', type: 'text', required: true, order: 2, promptHint: 'System/project overview' },
-    { id: 'metrics', title: 'System Metrics', type: 'mixed', required: true, order: 3, promptHint: 'Performance and operational metrics' },
-    { id: 'performance', title: 'Performance Analysis', type: 'mixed', required: true, order: 4, promptHint: 'Detailed performance breakdown' },
-    { id: 'errors', title: 'Error Analysis', type: 'mixed', required: false, order: 5, promptHint: 'Error types and distributions' },
-    { id: 'incidents', title: 'Incidents & Issues', type: 'text', required: false, order: 6, promptHint: 'Incident summaries and resolutions' },
-    { id: 'architecture', title: 'Architecture Notes', type: 'text', required: false, order: 7, promptHint: 'Technical architecture details' },
-    { id: 'recommendations', title: 'Technical Recommendations', type: 'text', required: true, order: 8, promptHint: 'Engineering recommendations' },
+    {
+      id: 'overview',
+      title: 'Overview',
+      type: 'text',
+      required: true,
+      order: 2,
+      promptHint: 'System/project overview',
+    },
+    {
+      id: 'metrics',
+      title: 'System Metrics',
+      type: 'mixed',
+      required: true,
+      order: 3,
+      promptHint: 'Performance and operational metrics',
+    },
+    {
+      id: 'performance',
+      title: 'Performance Analysis',
+      type: 'mixed',
+      required: true,
+      order: 4,
+      promptHint: 'Detailed performance breakdown',
+    },
+    {
+      id: 'errors',
+      title: 'Error Analysis',
+      type: 'mixed',
+      required: false,
+      order: 5,
+      promptHint: 'Error types and distributions',
+    },
+    {
+      id: 'incidents',
+      title: 'Incidents & Issues',
+      type: 'text',
+      required: false,
+      order: 6,
+      promptHint: 'Incident summaries and resolutions',
+    },
+    {
+      id: 'architecture',
+      title: 'Architecture Notes',
+      type: 'text',
+      required: false,
+      order: 7,
+      promptHint: 'Technical architecture details',
+    },
+    {
+      id: 'recommendations',
+      title: 'Technical Recommendations',
+      type: 'text',
+      required: true,
+      order: 8,
+      promptHint: 'Engineering recommendations',
+    },
     { id: 'appendix', title: 'Technical Appendix', type: 'table', required: false, order: 9 },
   ],
   colors: {
@@ -205,23 +347,20 @@ export function getStyleConfig(style: ReportStyle): StyleConfig {
   return styleConfigs[style];
 }
 
-export function applyBrandingToStyle(
-  styleConfig: StyleConfig,
-  branding?: Branding
-): StyleConfig {
+export function applyBrandingToStyle(styleConfig: StyleConfig, branding?: Branding): StyleConfig {
   if (!branding) return styleConfig;
 
   return {
     ...styleConfig,
     colors: {
       ...styleConfig.colors,
-      primary: branding.primaryColor || styleConfig.colors.primary,
-      secondary: branding.secondaryColor || styleConfig.colors.secondary,
-      accent: branding.accentColor || styleConfig.colors.accent,
+      primary: branding.primaryColor ?? styleConfig.colors.primary,
+      secondary: branding.secondaryColor ?? styleConfig.colors.secondary,
+      accent: branding.accentColor ?? styleConfig.colors.accent,
     },
     fonts: {
       ...styleConfig.fonts,
-      body: branding.fontFamily || styleConfig.fonts.body,
+      body: branding.fontFamily ?? styleConfig.fonts.body,
     },
   };
 }
@@ -243,17 +382,17 @@ export function generateCSS(styleConfig: StyleConfig): string {
       --color-success: ${colors.success};
       --color-warning: ${colors.warning};
       --color-error: ${colors.error};
-      
+
       --font-heading: ${fonts.heading};
       --font-body: ${fonts.body};
       --font-code: ${fonts.code};
-      
+
       --size-h1: ${fonts.sizes.h1};
       --size-h2: ${fonts.sizes.h2};
       --size-h3: ${fonts.sizes.h3};
       --size-body: ${fonts.sizes.body};
       --size-small: ${fonts.sizes.small};
-      
+
       --spacing-section: ${spacing.sectionGap};
       --spacing-paragraph: ${spacing.paragraphGap};
       --spacing-chart: ${spacing.chartMargin};
@@ -498,4 +637,3 @@ export function generateCSS(styleConfig: StyleConfig): string {
     }
   `;
 }
-

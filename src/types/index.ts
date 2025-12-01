@@ -30,7 +30,14 @@ export type ReportStatus = z.infer<typeof ReportStatusSchema>;
 // Data Types
 // ============================================================================
 
-export const ColumnTypeSchema = z.enum(['numeric', 'categorical', 'datetime', 'text', 'boolean', 'unknown']);
+export const ColumnTypeSchema = z.enum([
+  'numeric',
+  'categorical',
+  'datetime',
+  'text',
+  'boolean',
+  'unknown',
+]);
 export type ColumnType = z.infer<typeof ColumnTypeSchema>;
 
 export interface ColumnProfile {
@@ -58,7 +65,15 @@ export interface DataProfile {
 // Chart Types
 // ============================================================================
 
-export const ChartTypeSchema = z.enum(['line', 'bar', 'stacked_bar', 'pie', 'donut', 'table', 'area']);
+export const ChartTypeSchema = z.enum([
+  'line',
+  'bar',
+  'stacked_bar',
+  'pie',
+  'donut',
+  'table',
+  'area',
+]);
 export type ChartType = z.infer<typeof ChartTypeSchema>;
 
 export interface ChartSuggestion {
@@ -254,4 +269,3 @@ export interface GeneratedNarrative {
   recommendations: string[];
   keyFindings: string[];
 }
-

@@ -1,4 +1,5 @@
 import winston from 'winston';
+
 import { config } from '../config/index.js';
 
 const { combine, timestamp, printf, colorize, errors } = winston.format;
@@ -16,11 +17,7 @@ const logFormat = printf(({ level, message, timestamp, stack, ...meta }) => {
 
 export const logger = winston.createLogger({
   level: config.logging.level,
-  format: combine(
-    errors({ stack: true }),
-    timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
-    logFormat
-  ),
+  format: combine(errors({ stack: true }), timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }), logFormat),
   transports: [
     new winston.transports.Console({
       format: combine(
@@ -47,4 +44,3 @@ export const logger = winston.createLogger({
 export const createModuleLogger = (moduleName: string) => {
   return logger.child({ module: moduleName });
 };
-

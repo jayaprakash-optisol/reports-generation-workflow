@@ -1,32 +1,31 @@
 import {
-  Document,
-  Packer,
-  Paragraph,
-  TextRun,
-  HeadingLevel,
-  Table,
-  TableRow,
-  TableCell,
-  WidthType,
   AlignmentType,
-  BorderStyle,
-  ImageRun,
-  PageBreak,
-  Header,
+  Document,
   Footer,
+  Header,
+  HeadingLevel,
+  ImageRun,
+  Packer,
+  PageBreak,
   PageNumber,
-  NumberFormat,
+  Paragraph,
+  Table,
+  TableCell,
+  TableRow,
+  TextRun,
+  WidthType,
 } from 'docx';
-import {
-  Report,
-  GeneratedNarrative,
-  GeneratedChart,
-  DataProfile,
-  ReportStyle,
+
+import type {
   Branding,
+  DataProfile,
+  GeneratedChart,
+  GeneratedNarrative,
+  Report,
+  ReportStyle,
 } from '../types/index.js';
-import { storage } from '../utils/storage.js';
 import { createModuleLogger } from '../utils/logger.js';
+import { storage } from '../utils/storage.js';
 
 const logger = createModuleLogger('docx-generator');
 
@@ -49,7 +48,7 @@ export class DOCXGenerator {
     _branding?: Branding
   ): Promise<{ path: string; size: number }> {
     const colors = STYLE_COLORS[report.style];
-    
+
     const doc = new Document({
       creator: 'AI Report Generator',
       title: report.title,
@@ -105,7 +104,7 @@ export class DOCXGenerator {
           children: [
             // Cover page content
             ...this.generateCoverPage(report, colors),
-            
+
             // Page break after cover
             new Paragraph({
               children: [new PageBreak()],
@@ -176,8 +175,8 @@ export class DOCXGenerator {
 
     return [
       // Spacer
-      ...Array(8).fill(null).map(() => new Paragraph({ text: '' })),
-      
+      ...new Array(8).fill(null).map(() => new Paragraph({ text: '' })),
+
       // Title
       new Paragraph({
         alignment: AlignmentType.CENTER,
@@ -208,7 +207,7 @@ export class DOCXGenerator {
       }),
 
       // More spacer
-      ...Array(6).fill(null).map(() => new Paragraph({ text: '' })),
+      ...new Array(6).fill(null).map(() => new Paragraph({ text: '' })),
 
       // Date
       new Paragraph({
@@ -260,16 +259,17 @@ export class DOCXGenerator {
         ],
       }),
       new Paragraph({ text: '' }),
-      ...items.map((item, index) =>
-        new Paragraph({
-          children: [
-            new TextRun({
-              text: `${index + 1}. ${item}`,
-              size: 24,
-            }),
-          ],
-          spacing: { after: 120 },
-        })
+      ...items.map(
+        (item, index) =>
+          new Paragraph({
+            children: [
+              new TextRun({
+                text: `${index + 1}. ${item}`,
+                size: 24,
+              }),
+            ],
+            spacing: { after: 120 },
+          })
       ),
     ];
   }
@@ -504,7 +504,7 @@ export class DOCXGenerator {
     }
 
     const headers = ['Metric', 'Minimum', 'Maximum', 'Mean', 'Std Dev'];
-    
+
     const headerRow = new TableRow({
       children: headers.map(
         header =>
@@ -599,4 +599,3 @@ export class DOCXGenerator {
 }
 
 export const docxGenerator = new DOCXGenerator();
-

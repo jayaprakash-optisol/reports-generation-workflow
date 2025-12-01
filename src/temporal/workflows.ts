@@ -1,22 +1,14 @@
 import {
-  proxyActivities,
-  sleep,
   ApplicationFailure,
-  defineSignal,
   defineQuery,
+  defineSignal,
+  proxyActivities,
   setHandler,
 } from '@temporalio/workflow';
+
+import type { InputData, Report, ReportConfig, ReportStatus } from '../types/index.js';
+
 import type * as activities from './activities.js';
-import type {
-  InputData,
-  ReportConfig,
-  Report,
-  ReportFile,
-  ReportStatus,
-  DataProfile,
-  GeneratedNarrative,
-  GeneratedChart,
-} from '../types/index.js';
 
 // Proxy activities with retry policies
 const {
@@ -97,11 +89,7 @@ export async function reportGenerationWorkflow(
   setHandler(getProgressQuery, () => state.progress);
 
   // Helper function to update state
-  const updateState = async (
-    status: ReportStatus,
-    progress: number,
-    currentStep: string
-  ) => {
+  const updateState = async (status: ReportStatus, progress: number, currentStep: string) => {
     state = { status, progress, currentStep };
     await updateReportStatus({
       reportId,
@@ -112,30 +100,30 @@ export async function reportGenerationWorkflow(
   };
 
   try {
-    // Check for cancellation at each step
-    if (cancelled) {
-      throw ApplicationFailure.create({ type: 'CancelledError', message: 'Workflow cancelled by user' });
-    }
-
     // ========================================================================
     // Step 1: Data Profiling (10%)
     // ========================================================================
     await updateState('DATA_PROFILING', 10, 'Analyzing and profiling input data');
-    
+
     const { profile, parsedData, textContent } = await profileData({
       reportId,
       inputData,
     });
 
+    // Signals are processed between workflow steps, so cancelled can change after await
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     if (cancelled) {
-      throw ApplicationFailure.create({ type: 'CancelledError', message: 'Workflow cancelled by user' });
+      throw ApplicationFailure.create({
+        type: 'CancelledError',
+        message: 'Workflow cancelled by user',
+      });
     }
 
     // ========================================================================
     // Step 2: Insight Generation (30%)
     // ========================================================================
     await updateState('INSIGHT_GENERATION', 30, 'Generating insights with AI');
-    
+
     const narrative = await generateInsights({
       reportId,
       profile,
@@ -144,30 +132,40 @@ export async function reportGenerationWorkflow(
       config,
     });
 
+    // Signals are processed between workflow steps, so cancelled can change after await
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     if (cancelled) {
-      throw ApplicationFailure.create({ type: 'CancelledError', message: 'Workflow cancelled by user' });
+      throw ApplicationFailure.create({
+        type: 'CancelledError',
+        message: 'Workflow cancelled by user',
+      });
     }
 
     // ========================================================================
     // Step 3: Chart Generation (50%)
     // ========================================================================
     await updateState('CHART_GENERATION', 50, 'Creating visualizations');
-    
+
     const charts = await generateCharts({
       reportId,
       profile,
       parsedData,
     });
 
+    // Signals are processed between workflow steps, so cancelled can change after await
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     if (cancelled) {
-      throw ApplicationFailure.create({ type: 'CancelledError', message: 'Workflow cancelled by user' });
+      throw ApplicationFailure.create({
+        type: 'CancelledError',
+        message: 'Workflow cancelled by user',
+      });
     }
 
     // ========================================================================
     // Step 4: Layout Rendering (70%)
     // ========================================================================
     await updateState('LAYOUT_RENDERING', 70, 'Rendering report layout');
-    
+
     const html = await renderLayout({
       reportId,
       title: config.title,
@@ -178,15 +176,20 @@ export async function reportGenerationWorkflow(
       branding: config.branding,
     });
 
+    // Signals are processed between workflow steps, so cancelled can change after await
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     if (cancelled) {
-      throw ApplicationFailure.create({ type: 'CancelledError', message: 'Workflow cancelled by user' });
+      throw ApplicationFailure.create({
+        type: 'CancelledError',
+        message: 'Workflow cancelled by user',
+      });
     }
 
     // ========================================================================
     // Step 5: Export Formats (90%)
     // ========================================================================
     await updateState('EXPORTING', 90, 'Exporting to requested formats');
-    
+
     const files = await exportFormats({
       reportId,
       html,
@@ -203,7 +206,7 @@ export async function reportGenerationWorkflow(
     // Step 6: Finalize (100%)
     // ========================================================================
     await updateState('COMPLETED', 100, 'Report complete');
-    
+
     const report = await finalizeReport({
       reportId,
       title: config.title,
@@ -217,11 +220,10 @@ export async function reportGenerationWorkflow(
       report,
       success: true,
     };
-
   } catch (error) {
     // Handle errors
     const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-    
+
     state = {
       status: 'FAILED',
       progress: state.progress,
@@ -269,4 +271,3 @@ export async function retryReportWorkflow(
   // A more sophisticated implementation could resume from a specific step
   return reportGenerationWorkflow(input.originalInput);
 }
-

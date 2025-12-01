@@ -1,6 +1,8 @@
-import puppeteer, { Browser } from 'puppeteer';
-import { storage } from '../utils/storage.js';
+import type { Browser } from 'puppeteer';
+import puppeteer from 'puppeteer';
+
 import { createModuleLogger } from '../utils/logger.js';
+import { storage } from '../utils/storage.js';
 
 const logger = createModuleLogger('pdf-generator');
 
@@ -128,9 +130,9 @@ export class PDFGenerator {
       await page.evaluateHandle('document.fonts.ready');
 
       const pdfBuffer = await page.pdf({
-        format: options.pageSize || 'A4',
-        landscape: options.landscape || false,
-        scale: options.scale || 1,
+        format: options.pageSize ?? 'A4',
+        landscape: options.landscape ?? false,
+        scale: options.scale ?? 1,
         printBackground: true,
         margin: {
           top: '2cm',
@@ -174,11 +176,7 @@ export class PDFGenerator {
         fullPage: false,
       });
 
-      const path = await storage.saveOutputFile(
-        reportId,
-        filename,
-        Buffer.from(screenshotBuffer)
-      );
+      const path = await storage.saveOutputFile(reportId, filename, Buffer.from(screenshotBuffer));
       const size = screenshotBuffer.length;
 
       logger.info(`Generated preview: ${filename}`);
@@ -191,4 +189,3 @@ export class PDFGenerator {
 }
 
 export const pdfGenerator = new PDFGenerator();
-

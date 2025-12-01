@@ -1,22 +1,24 @@
-import { dataProfiler } from '../services/data-profiler.js';
-import { openaiService } from '../services/openai-service.js';
 import { chartGenerator } from '../services/chart-generator.js';
-import { htmlGenerator } from '../templates/html-generator.js';
-import { pdfGenerator } from '../services/pdf-generator.js';
+import { dataProfiler } from '../services/data-profiler.js';
 import { docxGenerator } from '../services/docx-generator.js';
-import { storage } from '../utils/storage.js';
-import { createModuleLogger } from '../utils/logger.js';
-import {
-  InputData,
-  ReportConfig,
+import { openaiService } from '../services/openai-service.js';
+import { pdfGenerator } from '../services/pdf-generator.js';
+import { htmlGenerator } from '../templates/html-generator.js';
+import type {
+  Branding,
   DataProfile,
-  GeneratedNarrative,
   GeneratedChart,
-  Report,
-  ReportFile,
+  GeneratedNarrative,
+  InputData,
   OutputFormat,
+  Report,
+  ReportConfig,
+  ReportFile,
   ReportStatus,
+  ReportStyle,
 } from '../types/index.js';
+import { createModuleLogger } from '../utils/logger.js';
+import { storage } from '../utils/storage.js';
 
 const logger = createModuleLogger('activities');
 
@@ -118,18 +120,11 @@ export async function generateCharts(input: GenerateChartsInput): Promise<Genera
 export interface RenderLayoutInput {
   reportId: string;
   title: string;
-  style: 'business' | 'research' | 'technical';
+  style: ReportStyle;
   narrative: GeneratedNarrative;
   charts: GeneratedChart[];
   profile: DataProfile;
-  branding?: {
-    logoUrl?: string;
-    primaryColor?: string;
-    secondaryColor?: string;
-    accentColor?: string;
-    fontFamily?: string;
-    companyName?: string;
-  };
+  branding?: Branding;
 }
 
 export async function renderLayout(input: RenderLayoutInput): Promise<string> {
@@ -174,18 +169,11 @@ export interface ExportFormatsInput {
   html: string;
   outputFormats: OutputFormat[];
   title: string;
-  style: 'business' | 'research' | 'technical';
+  style: ReportStyle;
   narrative: GeneratedNarrative;
   charts: GeneratedChart[];
   profile: DataProfile;
-  branding?: {
-    logoUrl?: string;
-    primaryColor?: string;
-    secondaryColor?: string;
-    accentColor?: string;
-    fontFamily?: string;
-    companyName?: string;
-  };
+  branding?: Branding;
 }
 
 export async function exportFormats(input: ExportFormatsInput): Promise<ReportFile[]> {
@@ -217,7 +205,7 @@ export async function exportFormats(input: ExportFormatsInput): Promise<ReportFi
         }
 
         case 'PDF': {
-          const { path: pdfPath, size: pdfSize } = await pdfGenerator.generateFromHTML(
+          const { size: pdfSize } = await pdfGenerator.generateFromHTML(
             input.html,
             input.reportId,
             `${input.reportId}.pdf`
@@ -242,7 +230,7 @@ export async function exportFormats(input: ExportFormatsInput): Promise<ReportFi
             updatedAt: new Date().toISOString(),
           };
 
-          const { path: docxPath, size: docxSize } = await docxGenerator.generateReport(
+          const { size: docxSize } = await docxGenerator.generateReport(
             report,
             input.narrative,
             input.charts,
@@ -281,7 +269,7 @@ export async function exportFormats(input: ExportFormatsInput): Promise<ReportFi
 export interface FinalizeReportInput {
   reportId: string;
   title: string;
-  style: 'business' | 'research' | 'technical';
+  style: ReportStyle;
   outputFormats: OutputFormat[];
   files: ReportFile[];
   profile: DataProfile;

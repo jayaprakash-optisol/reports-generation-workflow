@@ -1,10 +1,11 @@
-import express from 'express';
 import cors from 'cors';
+import express from 'express';
 import helmet from 'helmet';
+
+import routes from './api/routes.js';
 import { config } from './config/index.js';
 import { createModuleLogger } from './utils/logger.js';
 import { storage } from './utils/storage.js';
-import routes from './api/routes.js';
 
 const logger = createModuleLogger('server');
 
@@ -17,9 +18,11 @@ async function main() {
   const app = express();
 
   // Middleware
-  app.use(helmet({
-    contentSecurityPolicy: false, // Disable for API
-  }));
+  app.use(
+    helmet({
+      contentSecurityPolicy: false, // Disable for API
+    })
+  );
   app.use(cors());
   app.use(express.json({ limit: '50mb' }));
   app.use(express.urlencoded({ extended: true, limit: '50mb' }));
@@ -57,13 +60,15 @@ async function main() {
   });
 
   // Error handling
-  app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
-    logger.error('Unhandled error', { error: err.message, stack: err.stack });
-    res.status(500).json({
-      error: 'Internal server error',
-      message: config.server.isDev ? err.message : 'An unexpected error occurred',
-    });
-  });
+  app.use(
+    (err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+      logger.error('Unhandled error', { error: err.message, stack: err.stack });
+      res.status(500).json({
+        error: 'Internal server error',
+        message: config.server.isDev ? err.message : 'An unexpected error occurred',
+      });
+    }
+  );
 
   // 404 handler
   app.use((_req, res) => {
@@ -94,4 +99,3 @@ main().catch(err => {
   logger.error('Failed to start server', { error: err });
   process.exit(1);
 });
-

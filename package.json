@@ -11,7 +11,10 @@
     "worker": "tsx src/temporal/worker.ts",
     "worker:dev": "tsx watch src/temporal/worker.ts",
     "lint": "eslint src --ext .ts",
+    "lint:fix": "eslint src --ext .ts --fix",
     "format": "prettier --write \"src/**/*.ts\"",
+    "format:check": "prettier --check \"src/**/*.ts\"",
+    "type-check": "tsc --noEmit",
     "test": "vitest"
   },
   "dependencies": {
@@ -41,10 +44,16 @@
     "@types/express": "^5.0.5",
     "@types/multer": "^1.4.12",
     "@types/node": "^22.10.2",
+    "@typescript-eslint/eslint-plugin": "^8.18.2",
+    "@typescript-eslint/parser": "^8.18.2",
     "eslint": "^9.39.1",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-import": "^2.31.0",
+    "eslint-plugin-unused-imports": "^4.1.4",
     "prettier": "^3.7.3",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3",
+    "typescript-eslint": "^8.48.0",
     "vitest": "^2.1.8"
   },
   "engines": {

@@ -1,17 +1,12 @@
 import { Client, Connection, WorkflowExecutionAlreadyStartedError } from '@temporalio/client';
 import { nanoid } from 'nanoid';
+
 import { config } from '../config/index.js';
-import { createModuleLogger } from '../utils/logger.js';
-import type {
-  ReportGenerationWorkflowInput,
-  ReportGenerationWorkflowOutput,
-} from './workflows.js';
-import { 
-  cancelWorkflowSignal, 
-  getStatusQuery, 
-  getProgressQuery 
-} from './workflows.js';
 import type { InputData, ReportConfig, ReportStatus } from '../types/index.js';
+import { createModuleLogger } from '../utils/logger.js';
+
+import type { ReportGenerationWorkflowInput, ReportGenerationWorkflowOutput } from './workflows.js';
+import { cancelWorkflowSignal, getStatusQuery, getProgressQuery } from './workflows.js';
 
 const logger = createModuleLogger('temporal-client');
 
@@ -55,7 +50,7 @@ export async function startReportGeneration(
   };
 
   try {
-    const handle = await client.workflow.start('reportGenerationWorkflow', {
+    await client.workflow.start('reportGenerationWorkflow', {
       taskQueue: config.temporal.taskQueue,
       workflowId,
       args: [input],
@@ -78,9 +73,7 @@ export async function startReportGeneration(
 /**
  * Get workflow status
  */
-export async function getWorkflowStatus(
-  workflowId: string
-): Promise<{
+export async function getWorkflowStatus(workflowId: string): Promise<{
   status: ReportStatus;
   progress: number;
   currentStep: string;
@@ -163,7 +156,7 @@ export async function getWorkflowInfo(workflowId: string): Promise<{
   try {
     const handle = client.workflow.getHandle(workflowId);
     const description = await handle.describe();
-    
+
     return {
       status: description.status.name,
       startTime: description.startTime,
@@ -186,4 +179,3 @@ export async function closeClient(): Promise<void> {
     logger.info('Temporal client connection closed');
   }
 }
-
