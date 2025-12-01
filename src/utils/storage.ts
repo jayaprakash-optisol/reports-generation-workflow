@@ -1,5 +1,5 @@
-import fs from 'fs/promises';
-import path from 'path';
+import fs from 'node:fs/promises';
+import path from 'node:path';
 
 import { config } from '../config/index.js';
 
@@ -8,10 +8,10 @@ import { createModuleLogger } from './logger.js';
 const logger = createModuleLogger('storage');
 
 export class StorageService {
-  private basePath: string;
-  private reportsPath: string;
-  private uploadsPath: string;
-  private chartsPath: string;
+  private readonly basePath: string;
+  private readonly reportsPath: string;
+  private readonly uploadsPath: string;
+  private readonly chartsPath: string;
 
   constructor() {
     this.basePath = config.storage.basePath;

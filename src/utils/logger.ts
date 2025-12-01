@@ -1,7 +1,6 @@
 import winston from 'winston';
 
 import { config } from '../config/index.js';
-
 const { combine, timestamp, printf, colorize, errors } = winston.format;
 
 const logFormat = printf(({ level, message, timestamp, stack, ...meta }) => {

@@ -6,7 +6,7 @@ import type { InputData, ReportConfig, ReportStatus } from '../types/index.js';
 import { createModuleLogger } from '../utils/logger.js';
 
 import type { ReportGenerationWorkflowInput, ReportGenerationWorkflowOutput } from './workflows.js';
-import { cancelWorkflowSignal, getStatusQuery, getProgressQuery } from './workflows.js';
+import { cancelWorkflowSignal, getProgressQuery, getStatusQuery } from './workflows.js';
 
 const logger = createModuleLogger('temporal-client');
 
