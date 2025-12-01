@@ -1,0 +1,79 @@
+services:
+  # PostgreSQL for Temporal
+  postgresql:
+    image: postgres:15-alpine
+    container_name: report-gen-postgres
+    environment:
+      POSTGRES_USER: temporal
+      POSTGRES_PASSWORD: temporal
+      POSTGRES_DB: temporal
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U temporal']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Temporal Server
+  temporal:
+    image: temporalio/auto-setup:1.24.2
+    container_name: report-gen-temporal
+    depends_on:
+      postgresql:
+        condition: service_healthy
+    environment:
+      - DB=postgres12
+      - DB_PORT=5432
+      - POSTGRES_USER=temporal
+      - POSTGRES_PWD=temporal
+      - POSTGRES_SEEDS=postgresql
+      - DYNAMIC_CONFIG_FILE_PATH=config/dynamicconfig/development-sql.yaml
+    ports:
+      - '7233:7233'
+    volumes:
+      - ./temporal-config:/etc/temporal/config/dynamicconfig
+    healthcheck:
+      test: ['CMD', 'tctl', '--address', 'temporal:7233', 'cluster', 'health']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  # Temporal Web UI
+  temporal-ui:
+    image: temporalio/ui:2.26.2
+    container_name: report-gen-temporal-ui
+    depends_on:
+      temporal:
+        condition: service_healthy
+    environment:
+      - TEMPORAL_ADDRESS=temporal:7233
+      - TEMPORAL_CORS_ORIGINS=http://localhost:3000
+    ports:
+      - '8080:8080'
+
+  # Report Generator API (optional - for containerized deployment)
+  # Uncomment to run the API in Docker
+  # api:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile
+  #   container_name: report-gen-api
+  #   depends_on:
+  #     temporal:
+  #       condition: service_healthy
+  #   environment:
+  #     - PORT=3000
+  #     - NODE_ENV=production
+  #     - TEMPORAL_ADDRESS=temporal:7233
+  #     - OPENAI_API_KEY=${OPENAI_API_KEY}
+  #   ports:
+  #     - "3000:3000"
+  #   volumes:
+  #     - ./storage:/app/storage
+
+volumes:
+  postgres_data:

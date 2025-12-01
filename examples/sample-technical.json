@@ -1,0 +1,50 @@
+{
+  "data": [
+    {
+      "type": "structured",
+      "format": "json",
+      "data": [
+        {"timestamp": "2024-06-01T00:00:00Z", "requests": 15420, "errors": 45, "latency_p50": 120, "latency_p99": 450, "cpu_usage": 45, "memory_usage": 62},
+        {"timestamp": "2024-06-01T01:00:00Z", "requests": 12350, "errors": 38, "latency_p50": 115, "latency_p99": 420, "cpu_usage": 38, "memory_usage": 58},
+        {"timestamp": "2024-06-01T02:00:00Z", "requests": 8920, "errors": 22, "latency_p50": 98, "latency_p99": 380, "cpu_usage": 28, "memory_usage": 52},
+        {"timestamp": "2024-06-01T03:00:00Z", "requests": 6540, "errors": 15, "latency_p50": 85, "latency_p99": 320, "cpu_usage": 22, "memory_usage": 48},
+        {"timestamp": "2024-06-01T04:00:00Z", "requests": 5280, "errors": 12, "latency_p50": 78, "latency_p99": 290, "cpu_usage": 18, "memory_usage": 45},
+        {"timestamp": "2024-06-01T05:00:00Z", "requests": 7650, "errors": 18, "latency_p50": 92, "latency_p99": 350, "cpu_usage": 25, "memory_usage": 50},
+        {"timestamp": "2024-06-01T06:00:00Z", "requests": 12480, "errors": 35, "latency_p50": 118, "latency_p99": 430, "cpu_usage": 42, "memory_usage": 60},
+        {"timestamp": "2024-06-01T07:00:00Z", "requests": 18920, "errors": 52, "latency_p50": 145, "latency_p99": 520, "cpu_usage": 55, "memory_usage": 68},
+        {"timestamp": "2024-06-01T08:00:00Z", "requests": 25640, "errors": 78, "latency_p50": 175, "latency_p99": 680, "cpu_usage": 72, "memory_usage": 78},
+        {"timestamp": "2024-06-01T09:00:00Z", "requests": 32450, "errors": 125, "latency_p50": 210, "latency_p99": 850, "cpu_usage": 85, "memory_usage": 85},
+        {"timestamp": "2024-06-01T10:00:00Z", "requests": 35820, "errors": 142, "latency_p50": 235, "latency_p99": 920, "cpu_usage": 92, "memory_usage": 88},
+        {"timestamp": "2024-06-01T11:00:00Z", "requests": 34560, "errors": 138, "latency_p50": 225, "latency_p99": 890, "cpu_usage": 88, "memory_usage": 86},
+        {"timestamp": "2024-06-01T12:00:00Z", "requests": 28940, "errors": 95, "latency_p50": 185, "latency_p99": 720, "cpu_usage": 75, "memory_usage": 80},
+        {"timestamp": "2024-06-01T13:00:00Z", "requests": 31250, "errors": 108, "latency_p50": 198, "latency_p99": 780, "cpu_usage": 82, "memory_usage": 84},
+        {"timestamp": "2024-06-01T14:00:00Z", "requests": 33680, "errors": 128, "latency_p50": 218, "latency_p99": 860, "cpu_usage": 87, "memory_usage": 87},
+        {"timestamp": "2024-06-01T15:00:00Z", "requests": 32150, "errors": 118, "latency_p50": 205, "latency_p99": 820, "cpu_usage": 84, "memory_usage": 85},
+        {"timestamp": "2024-06-01T16:00:00Z", "requests": 28450, "errors": 92, "latency_p50": 178, "latency_p99": 695, "cpu_usage": 73, "memory_usage": 79},
+        {"timestamp": "2024-06-01T17:00:00Z", "requests": 24680, "errors": 72, "latency_p50": 158, "latency_p99": 620, "cpu_usage": 65, "memory_usage": 74},
+        {"timestamp": "2024-06-01T18:00:00Z", "requests": 21450, "errors": 58, "latency_p50": 142, "latency_p99": 550, "cpu_usage": 58, "memory_usage": 70},
+        {"timestamp": "2024-06-01T19:00:00Z", "requests": 18920, "errors": 48, "latency_p50": 128, "latency_p99": 490, "cpu_usage": 52, "memory_usage": 66},
+        {"timestamp": "2024-06-01T20:00:00Z", "requests": 16540, "errors": 42, "latency_p50": 118, "latency_p99": 445, "cpu_usage": 46, "memory_usage": 63},
+        {"timestamp": "2024-06-01T21:00:00Z", "requests": 14280, "errors": 38, "latency_p50": 112, "latency_p99": 415, "cpu_usage": 40, "memory_usage": 59},
+        {"timestamp": "2024-06-01T22:00:00Z", "requests": 12650, "errors": 32, "latency_p50": 105, "latency_p99": 395, "cpu_usage": 35, "memory_usage": 56},
+        {"timestamp": "2024-06-01T23:00:00Z", "requests": 10840, "errors": 28, "latency_p50": 98, "latency_p99": 365, "cpu_usage": 30, "memory_usage": 53}
+      ]
+    },
+    {
+      "type": "unstructured",
+      "format": "text",
+      "content": "System Health Report - June 1st, 2024\n\nIncident Summary:\n- 10:15 AM: Brief latency spike (P99 exceeded 1000ms) due to database connection pool exhaustion\n- Resolution: Increased connection pool size from 50 to 100\n- Root cause: Increased traffic from marketing campaign launch\n\nInfrastructure Notes:\n- All 8 application servers operating normally\n- Database primary/replica replication lag: < 50ms\n- CDN cache hit ratio: 94.2%\n- SSL certificate valid for 45 more days\n\nRecommendations:\n1. Consider horizontal scaling before next marketing campaign\n2. Implement circuit breaker pattern for external API calls\n3. Review and optimize slow database queries identified in APM"
+    }
+  ],
+  "config": {
+    "title": "System Performance Report - June 2024",
+    "style": "technical",
+    "outputFormats": ["PDF", "HTML"],
+    "branding": {
+      "primaryColor": "#0d1117",
+      "accentColor": "#58a6ff",
+      "companyName": "DevOps Team"
+    }
+  }
+}
+

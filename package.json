@@ -1,0 +1,53 @@
+{
+  "name": "ai-report-generator",
+  "version": "1.0.0",
+  "description": "AI-powered report generator with Temporal workflows and OpenAI integration",
+  "main": "dist/index.js",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx watch src/index.ts",
+    "start": "node dist/index.js",
+    "worker": "tsx src/temporal/worker.ts",
+    "worker:dev": "tsx watch src/temporal/worker.ts",
+    "lint": "eslint src --ext .ts",
+    "format": "prettier --write \"src/**/*.ts\"",
+    "test": "vitest"
+  },
+  "dependencies": {
+    "@temporalio/activity": "^1.13.2",
+    "@temporalio/client": "^1.13.2",
+    "@temporalio/worker": "^1.13.2",
+    "@temporalio/workflow": "^1.13.2",
+    "canvas": "^3.2.0",
+    "chart.js": "^4.5.1",
+    "chartjs-node-canvas": "^5.0.0",
+    "cors": "^2.8.5",
+    "csv-parse": "^6.1.0",
+    "docx": "^9.5.1",
+    "dotenv": "^16.4.7",
+    "express": "^5.1.0",
+    "express-validator": "^7.3.1",
+    "helmet": "^8.1.0",
+    "multer": "^1.4.5-lts.1",
+    "nanoid": "^5.1.6",
+    "openai": "^6.9.1",
+    "puppeteer": "^24.31.0",
+    "winston": "^3.18.3",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.5",
+    "@types/multer": "^1.4.12",
+    "@types/node": "^22.10.2",
+    "eslint": "^9.39.1",
+    "prettier": "^3.7.3",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3",
+    "vitest": "^2.1.8"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

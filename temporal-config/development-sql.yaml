@@ -1,0 +1,30 @@
+# Temporal Dynamic Configuration for Development
+# This file contains development-appropriate settings
+
+system.forceSearchAttributesCacheRefreshOnRead:
+  - value: true
+
+# Workflow execution limits
+limit.maxIDLength:
+  - value: 1000
+    constraints: {}
+
+# History configuration
+history.maximumSignalNameLength:
+  - value: 255
+    constraints: {}
+
+# Frontend configuration
+frontend.keepAliveMaxConnectionAge:
+  - value: 5m
+    constraints: {}
+
+frontend.keepAliveMaxConnectionAgeGrace:
+  - value: 70s
+    constraints: {}
+
+# Enable advanced visibility
+system.enableAdvancedVisibility:
+  - value: true
+    constraints: {}
+
