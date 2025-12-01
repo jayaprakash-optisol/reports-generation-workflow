@@ -1,7 +1,7 @@
-import path from 'path';
-import { fileURLToPath } from 'url';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-import { Worker, NativeConnection, bundleWorkflowCode } from '@temporalio/worker';
+import { NativeConnection, Worker, bundleWorkflowCode } from '@temporalio/worker';
 
 import { config } from '../config/index.js';
 import { createModuleLogger } from '../utils/logger.js';
@@ -47,16 +47,15 @@ async function run() {
   logger.info(`Task queue: ${config.temporal.taskQueue}`);
 
   // Handle graceful shutdown
-  const shutdown = () => {
+  const shutdown = async () => {
     logger.info('Shutting down worker...');
-    void worker
-      .shutdown()
-      .then(() => connection.close())
-      .then(() => process.exit(0));
+    worker.shutdown();
+    await connection.close();
+    process.exit(0);
   };
 
-  process.on('SIGINT', shutdown);
-  process.on('SIGTERM', shutdown);
+  process.on('SIGINT', () => void shutdown());
+  process.on('SIGTERM', () => void shutdown());
 
   // Start the worker
   await worker.run();
