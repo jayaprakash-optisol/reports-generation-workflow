@@ -10,7 +10,7 @@ const envSchema = z.object({
 
   // OpenAI
   OPENAI_API_KEY: z.string().min(1, 'OpenAI API key is required'),
-  OPENAI_MODEL: z.string().default('gpt-4o'),
+  OPENAI_MODEL: z.string().default('gpt-4o-mini'),
   OPENAI_IMAGE_MODEL: z.string().default('dall-e-3'),
 
   // Temporal
@@ -19,10 +19,20 @@ const envSchema = z.object({
   TEMPORAL_TASK_QUEUE: z.string().default('report-generation'),
 
   // Storage
+  STORAGE_TYPE: z.enum(['local', 'minio']).default('local'),
   STORAGE_PATH: z.string().default('./storage'),
   REPORTS_PATH: z.string().default('./storage/reports'),
   UPLOADS_PATH: z.string().default('./storage/uploads'),
   CHARTS_PATH: z.string().default('./storage/charts'),
+
+  // MinIO Configuration
+  MINIO_ENDPOINT: z.string().default('http://localhost:9000'),
+  MINIO_ACCESS_KEY: z.string().default('minioadmin'),
+  MINIO_SECRET_KEY: z.string().default('minioadmin'),
+  MINIO_BUCKET_REPORTS: z.string().default('reports'),
+  MINIO_BUCKET_UPLOADS: z.string().default('uploads'),
+  MINIO_BUCKET_CHARTS: z.string().default('charts'),
+  MINIO_USE_SSL: z.string().default('false'),
 
   // Report
   MAX_UPLOAD_SIZE_MB: z.string().default('20'),
@@ -64,19 +74,31 @@ export const config = {
     taskQueue: env.TEMPORAL_TASK_QUEUE,
   },
   storage: {
+    type: env.STORAGE_TYPE,
     basePath: env.STORAGE_PATH,
     reportsPath: env.REPORTS_PATH,
     uploadsPath: env.UPLOADS_PATH,
     chartsPath: env.CHARTS_PATH,
   },
+  minio: {
+    endpoint: env.MINIO_ENDPOINT,
+    accessKey: env.MINIO_ACCESS_KEY,
+    secretKey: env.MINIO_SECRET_KEY,
+    buckets: {
+      reports: env.MINIO_BUCKET_REPORTS,
+      uploads: env.MINIO_BUCKET_UPLOADS,
+      charts: env.MINIO_BUCKET_CHARTS,
+    },
+    useSSL: env.MINIO_USE_SSL === 'true',
+  },
   report: {
-    maxUploadSizeMB: parseInt(env.MAX_UPLOAD_SIZE_MB, 10),
+    maxUploadSizeMB: Number.parseInt(env.MAX_UPLOAD_SIZE_MB, 10),
     defaultStyle: env.DEFAULT_REPORT_STYLE,
     defaultFormat: env.DEFAULT_OUTPUT_FORMAT,
   },
   llm: {
-    maxTokens: parseInt(env.LLM_MAX_TOKENS, 10),
-    temperature: parseFloat(env.LLM_TEMPERATURE),
+    maxTokens: Number.parseInt(env.LLM_MAX_TOKENS, 10),
+    temperature: Number.parseFloat(env.LLM_TEMPERATURE),
   },
   logging: {
     level: env.LOG_LEVEL,

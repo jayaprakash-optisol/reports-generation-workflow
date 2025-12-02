@@ -1,4 +1,41 @@
 services:
+  # MinIO Object Storage (S3-compatible)
+  minio:
+    image: minio/minio:latest
+    container_name: report-gen-minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    ports:
+      - '9000:9000'
+      - '9001:9001'
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ['CMD', 'mc', 'ready', 'local']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # MinIO bucket initialization
+  minio-init:
+    image: minio/mc:latest
+    container_name: report-gen-minio-init
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+      mc alias set myminio http://minio:9000 minioadmin minioadmin;
+      mc mb myminio/reports --ignore-existing;
+      mc mb myminio/uploads --ignore-existing;
+      mc mb myminio/charts --ignore-existing;
+      mc anonymous set download myminio/reports;
+      mc anonymous set download myminio/charts;
+      exit 0;
+      "
+
   # PostgreSQL for Temporal
   postgresql:
     image: postgres:15-alpine
@@ -77,3 +114,4 @@ services:
 
 volumes:
   postgres_data:
+  minio_data:
