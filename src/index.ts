@@ -2,10 +2,9 @@ import cors from 'cors';
 import express from 'express';
 import helmet from 'helmet';
 
-import routes from './api/routes.js';
-import { config } from './config/index.js';
-import { createModuleLogger } from './utils/logger.js';
-import { storage } from './utils/storage.js';
+import { config, createModuleLogger } from './core/index.js';
+import { healthRoutes, reportRoutes } from './modules/index.js';
+import { storage } from './services/index.js';
 
 const logger = createModuleLogger('server');
 
@@ -37,7 +36,8 @@ async function main() {
   });
 
   // API routes
-  app.use('/api', routes);
+  app.use('/api/reports', reportRoutes);
+  app.use('/api/health', healthRoutes);
 
   // Root endpoint
   app.get('/', (_req, res) => {
@@ -80,6 +80,7 @@ async function main() {
     logger.info(`🚀 Server running on http://localhost:${config.server.port}`);
     logger.info(`📊 Environment: ${config.server.nodeEnv}`);
     logger.info(`📁 Storage path: ${config.storage.basePath}`);
+    logger.info(`💾 Storage type: ${config.storage.type}`);
   });
 
   // Graceful shutdown

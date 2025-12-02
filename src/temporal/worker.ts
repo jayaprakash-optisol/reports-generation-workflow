@@ -1,13 +1,12 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { NativeConnection, Worker, bundleWorkflowCode } from '@temporalio/worker';
+import { bundleWorkflowCode, NativeConnection, Worker } from '@temporalio/worker';
 
-import { config } from '../config/index.js';
-import { createModuleLogger } from '../utils/logger.js';
-import { storage } from '../utils/storage.js';
+import { config, createModuleLogger } from '../core/index.js';
+import { storage } from '../services/index.js';
 
-import * as activities from './activities.js';
+import * as activities from './activities/index.js';
 
 const logger = createModuleLogger('temporal-worker');
 // eslint-disable-next-line @typescript-eslint/naming-convention
@@ -29,7 +28,7 @@ async function run() {
   // Bundle workflows from TypeScript source
   logger.info('Bundling workflows...');
   const workflowBundle = await bundleWorkflowCode({
-    workflowsPath: path.resolve(__dirname, './workflows.ts'),
+    workflowsPath: path.resolve(__dirname, './workflows/report-generation.workflow.ts'),
   });
 
   // Create worker

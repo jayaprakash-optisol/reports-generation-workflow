@@ -1,12 +1,11 @@
 import { Client, Connection, WorkflowExecutionAlreadyStartedError } from '@temporalio/client';
 import { nanoid } from 'nanoid';
 
-import { config } from '../config/index.js';
-import type { InputData, ReportConfig, ReportStatus } from '../types/index.js';
-import { createModuleLogger } from '../utils/logger.js';
+import { config, createModuleLogger } from '../core/index.js';
+import type { InputData, ReportConfig, ReportStatus } from '../shared/types/index.js';
 
-import type { ReportGenerationWorkflowInput, ReportGenerationWorkflowOutput } from './workflows.js';
-import { cancelWorkflowSignal, getProgressQuery, getStatusQuery } from './workflows.js';
+import type { ReportGenerationWorkflowInput, ReportGenerationWorkflowOutput } from './workflows/index.js';
+import { cancelWorkflowSignal, getProgressQuery, getStatusQuery } from './workflows/index.js';
 
 const logger = createModuleLogger('temporal-client');
 

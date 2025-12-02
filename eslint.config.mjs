@@ -1,8 +1,8 @@
 import eslint from '@eslint/js';
-import tseslint from 'typescript-eslint';
+import prettierConfig from 'eslint-config-prettier';
 import importPlugin from 'eslint-plugin-import';
 import unusedImports from 'eslint-plugin-unused-imports';
-import prettierConfig from 'eslint-config-prettier';
+import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
   eslint.configs.recommended,
@@ -38,14 +38,7 @@ export default tseslint.config(
       'import/order': [
         'error',
         {
-          groups: [
-            'builtin',
-            'external',
-            'internal',
-            'parent',
-            'sibling',
-            'index',
-          ],
+          groups: ['builtin', 'external', 'internal', 'parent', 'sibling', 'index'],
           'newlines-between': 'always',
           alphabetize: {
             order: 'asc',
@@ -75,7 +68,10 @@ export default tseslint.config(
       '@typescript-eslint/no-non-null-assertion': 'warn',
       '@typescript-eslint/prefer-nullish-coalescing': 'error',
       '@typescript-eslint/prefer-optional-chain': 'error',
-      '@typescript-eslint/no-unnecessary-condition': ['warn', { allowConstantLoopConditions: true }],
+      '@typescript-eslint/no-unnecessary-condition': [
+        'warn',
+        { allowConstantLoopConditions: true },
+      ],
       '@typescript-eslint/no-floating-promises': 'error',
       '@typescript-eslint/await-thenable': 'error',
       '@typescript-eslint/no-misused-promises': 'error',
@@ -106,14 +102,6 @@ export default tseslint.config(
     },
   },
   {
-    ignores: [
-      'dist/**',
-      'node_modules/**',
-      'storage/**',
-      '*.config.js',
-      '*.config.mjs',
-      'coverage/**',
-    ],
+    ignores: ['dist/**', 'node_modules/**', '*.config.js', '*.config.mjs', 'coverage/**'],
   }
 );
-
