@@ -4,7 +4,7 @@ import importPlugin from 'eslint-plugin-import';
 import unusedImports from 'eslint-plugin-unused-imports';
 import tseslint from 'typescript-eslint';
 
-export default tseslint.config(
+export default [
   eslint.configs.recommended,
   ...tseslint.configs.recommended,
   prettierConfig,
@@ -103,5 +103,5 @@ export default tseslint.config(
   },
   {
     ignores: ['dist/**', 'node_modules/**', '*.config.js', '*.config.mjs', 'coverage/**'],
-  }
-);
+  },
+];
