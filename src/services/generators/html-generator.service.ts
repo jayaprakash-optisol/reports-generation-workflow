@@ -535,4 +535,3 @@ export class HTMLGenerator implements IHTMLGenerator {
     return str.charAt(0).toUpperCase() + str.slice(1);
   }
 }
-

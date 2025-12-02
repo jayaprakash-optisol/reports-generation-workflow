@@ -14,4 +14,3 @@ export interface IDataProfiler {
     textContent: string[];
   }>;
 }
-

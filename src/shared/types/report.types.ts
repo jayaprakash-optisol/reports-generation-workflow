@@ -164,4 +164,3 @@ export interface GeneratedNarrative {
 
 // Re-export for convenience
 export type { Branding, OutputFormat, ReportStatus, ReportStyle };
-

@@ -119,4 +119,3 @@ export async function renderLayout(input: RenderLayoutInput): Promise<string> {
 
   return html;
 }
-

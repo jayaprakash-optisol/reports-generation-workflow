@@ -130,4 +130,3 @@ export class LocalStorageService implements IStorageService {
     return stats.size;
   }
 }
-

@@ -46,7 +46,12 @@ export class MinioStorageService implements IStorageService {
   // Report operations
   async saveReport(reportId: string, data: object): Promise<void> {
     const content = JSON.stringify(data, null, 2);
-    await this.putObject(this.buckets.reports, `${reportId}.json`, Buffer.from(content), 'application/json');
+    await this.putObject(
+      this.buckets.reports,
+      `${reportId}.json`,
+      Buffer.from(content),
+      'application/json'
+    );
     logger.debug(`Saved report metadata: ${reportId}`);
   }
 
@@ -138,7 +143,12 @@ export class MinioStorageService implements IStorageService {
   }
 
   // Private helper methods
-  private async putObject(bucket: string, key: string, data: Buffer, contentType?: string): Promise<void> {
+  private async putObject(
+    bucket: string,
+    key: string,
+    data: Buffer,
+    contentType?: string
+  ): Promise<void> {
     await this.client.send(
       new PutObjectCommand({
         Bucket: bucket,
@@ -194,4 +204,3 @@ export class MinioStorageService implements IStorageService {
     return contentTypes[ext] ?? 'application/octet-stream';
   }
 }
-

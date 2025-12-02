@@ -13,4 +13,3 @@ export const getDataProfiler = createSingleton<IDataProfiler>(() => new DataProf
 export const dataProfiler = getDataProfiler();
 
 export { DataProfiler } from './data-profiler.service.js';
-

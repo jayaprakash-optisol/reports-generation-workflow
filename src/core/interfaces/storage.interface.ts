@@ -30,4 +30,3 @@ export interface IStorageService {
   fileExists(filePath: string): Promise<boolean>;
   getFileSize(filePath: string): Promise<number>;
 }
-

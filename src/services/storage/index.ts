@@ -27,4 +27,3 @@ export const storage = getStorageService();
 // Export classes for direct instantiation if needed
 export { LocalStorageService } from './local-storage.service.js';
 export { MinioStorageService } from './minio-storage.service.js';
-

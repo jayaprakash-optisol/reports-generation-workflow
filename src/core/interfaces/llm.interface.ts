@@ -39,14 +39,10 @@ export interface ILLMService {
   /**
    * Generate an AI image for the report
    */
-  generateImage(
-    prompt: string,
-    size?: '1024x1024' | '1792x1024' | '1024x1792'
-  ): Promise<string>;
+  generateImage(prompt: string, size?: '1024x1024' | '1792x1024' | '1024x1792'): Promise<string>;
 
   /**
    * Generate cover page description for AI image
    */
   generateCoverImagePrompt(title: string, style: ReportStyle): Promise<string>;
 }
-

@@ -45,4 +45,3 @@ export { PDFGenerator } from './pdf-generator.service.js';
 
 // Export styles
 export * from './styles.js';
-

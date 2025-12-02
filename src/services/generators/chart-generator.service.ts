@@ -437,4 +437,3 @@ export class ChartGenerator implements IChartGenerator {
     return String(value);
   }
 }
-

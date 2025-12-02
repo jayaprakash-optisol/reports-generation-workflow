@@ -646,4 +646,3 @@ export class DOCXGenerator implements IDOCXGenerator {
     return str.charAt(0).toUpperCase() + str.slice(1);
   }
 }
-

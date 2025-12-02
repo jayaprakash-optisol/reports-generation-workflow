@@ -34,4 +34,3 @@ export async function profileData(input: ProfileDataInput): Promise<ProfileDataO
 
   return { profile, parsedData, textContent };
 }
-

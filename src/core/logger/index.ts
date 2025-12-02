@@ -46,4 +46,3 @@ export const logger = winston.createLogger({
 export const createModuleLogger = (moduleName: string) => {
   return logger.child({ module: moduleName });
 };
-

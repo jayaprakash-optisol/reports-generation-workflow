@@ -15,7 +15,11 @@ export {
   renderLayout,
   type RenderLayoutInput,
 } from './generation.activity.js';
-export { profileData, type ProfileDataInput, type ProfileDataOutput } from './profiling.activity.js';
+export {
+  profileData,
+  type ProfileDataInput,
+  type ProfileDataOutput,
+} from './profiling.activity.js';
 
 // Import and re-export all activities as a single object
 import { exportFormats, finalizeReport, updateReportStatus } from './export.activity.js';

@@ -80,4 +80,3 @@ export interface IDOCXGenerator {
     branding?: Branding
   ): Promise<{ path: string; size: number }>;
 }
-

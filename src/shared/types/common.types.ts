@@ -76,4 +76,3 @@ export interface TableData {
   rows: string[][];
   caption?: string;
 }
-

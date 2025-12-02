@@ -270,4 +270,3 @@ export async function retryReportWorkflow(
   // A more sophisticated implementation could resume from a specific step
   return reportGenerationWorkflow(input.originalInput);
 }
-

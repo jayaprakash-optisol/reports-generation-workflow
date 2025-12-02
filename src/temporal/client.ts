@@ -4,7 +4,10 @@ import { nanoid } from 'nanoid';
 import { config, createModuleLogger } from '../core/index.js';
 import type { InputData, ReportConfig, ReportStatus } from '../shared/types/index.js';
 
-import type { ReportGenerationWorkflowInput, ReportGenerationWorkflowOutput } from './workflows/index.js';
+import type {
+  ReportGenerationWorkflowInput,
+  ReportGenerationWorkflowOutput,
+} from './workflows/index.js';
 import { cancelWorkflowSignal, getProgressQuery, getStatusQuery } from './workflows/index.js';
 
 const logger = createModuleLogger('temporal-client');
