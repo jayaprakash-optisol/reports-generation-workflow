@@ -37,10 +37,7 @@ export class ReportController {
       const { data, config: reportConfig } = parseResult.data;
 
       // Start the workflow
-      const { reportId, workflowId } = await startReportGeneration(
-        data as InputData[],
-        reportConfig as ReportConfig
-      );
+      const { reportId, workflowId } = await startReportGeneration(data, reportConfig);
 
       logger.info(`Report generation started: ${reportId}`);
 
@@ -74,17 +71,28 @@ export class ReportController {
 
       // Convert uploaded files to InputData
       const inputData: InputData[] = files.map(file => {
-        const content = file.buffer.toString('utf-8');
         const isJson = file.mimetype === 'application/json';
         const isCsv = file.mimetype === 'text/csv';
+        const isExcel =
+          file.mimetype === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' ||
+          file.mimetype === 'application/vnd.ms-excel';
 
-        if (isJson || isCsv) {
+        if (isExcel) {
+          // Excel files are binary - encode as base64
+          return {
+            type: 'structured' as const,
+            format: 'xlsx' as const,
+            data: file.buffer.toString('base64'),
+          };
+        } else if (isJson || isCsv) {
+          const content = file.buffer.toString('utf-8');
           return {
             type: 'structured' as const,
             format: isJson ? ('json' as const) : ('csv' as const),
             data: content,
           };
         } else {
+          const content = file.buffer.toString('utf-8');
           return {
             type: 'unstructured' as const,
             format: file.mimetype.includes('markdown') ? ('markdown' as const) : ('text' as const),

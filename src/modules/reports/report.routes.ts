@@ -16,7 +16,15 @@ const upload = multer({
     fileSize: config.report.maxUploadSizeMB * 1024 * 1024,
   },
   fileFilter: (_req, file, cb) => {
-    const allowedMimes = ['text/csv', 'application/json', 'text/plain', 'text/markdown'];
+    const allowedMimes = [
+      'text/csv',
+      'application/json',
+      'text/plain',
+      'text/markdown',
+      // Excel formats
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // .xlsx
+      'application/vnd.ms-excel', // .xls
+    ];
     if (allowedMimes.includes(file.mimetype)) {
       cb(null, true);
     } else {

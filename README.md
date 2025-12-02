@@ -10,7 +10,6 @@ An intelligent report generation system that transforms structured and unstructu
 - **Multiple Output Formats**: Export to PDF, DOCX, or HTML
 - **Reliable Workflow Orchestration**: Temporal-based workflows with retries, status tracking, and fault tolerance
 - **Data Profiling**: Automatic detection of data types, statistical summaries, and quality scoring
-- **Customizable Branding**: Support for logos, custom colors, and fonts
 
 ## Architecture
 
@@ -222,8 +221,8 @@ curl -X POST http://localhost:3000/api/reports/abc123xyz/cancel
   "type": "structured",
   "format": "json",
   "data": [
-    {"date": "2024-01-01", "metric": 100, "category": "A"},
-    {"date": "2024-01-02", "metric": 150, "category": "B"}
+    { "date": "2024-01-01", "metric": 100, "category": "A" },
+    { "date": "2024-01-02", "metric": 150, "category": "B" }
   ]
 }
 ```
@@ -274,16 +273,16 @@ curl -X POST http://localhost:3000/api/reports/abc123xyz/cancel
 
 ## Workflow States
 
-| Status | Description |
-|--------|-------------|
-| `QUEUED` | Report request received, waiting to start |
-| `DATA_PROFILING` | Analyzing and profiling input data |
-| `INSIGHT_GENERATION` | AI generating narrative content |
-| `CHART_GENERATION` | Creating visualizations |
-| `LAYOUT_RENDERING` | Assembling report layout |
-| `EXPORTING` | Converting to requested formats |
-| `COMPLETED` | Report ready for download |
-| `FAILED` | Error occurred during generation |
+| Status               | Description                               |
+| -------------------- | ----------------------------------------- |
+| `QUEUED`             | Report request received, waiting to start |
+| `DATA_PROFILING`     | Analyzing and profiling input data        |
+| `INSIGHT_GENERATION` | AI generating narrative content           |
+| `CHART_GENERATION`   | Creating visualizations                   |
+| `LAYOUT_RENDERING`   | Assembling report layout                  |
+| `EXPORTING`          | Converting to requested formats           |
+| `COMPLETED`          | Report ready for download                 |
+| `FAILED`             | Error occurred during generation          |
 
 ## Development
 
@@ -332,6 +331,7 @@ npm run test         # Run tests
 ### Temporal UI
 
 Access the Temporal Web UI at http://localhost:8080 to:
+
 - Monitor workflow executions
 - View workflow history
 - Debug failed workflows
@@ -341,16 +341,16 @@ Access the Temporal Web UI at http://localhost:8080 to:
 
 ### Environment Variables
 
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `PORT` | API server port | 3000 |
-| `NODE_ENV` | Environment | development |
-| `OPENAI_API_KEY` | OpenAI API key | (required) |
-| `OPENAI_MODEL` | GPT model to use | gpt-4o |
-| `TEMPORAL_ADDRESS` | Temporal server address | localhost:7233 |
-| `TEMPORAL_NAMESPACE` | Temporal namespace | default |
-| `STORAGE_PATH` | Base storage directory | ./storage |
-| `LOG_LEVEL` | Logging level | info |
+| Variable             | Description             | Default        |
+| -------------------- | ----------------------- | -------------- |
+| `PORT`               | API server port         | 3000           |
+| `NODE_ENV`           | Environment             | development    |
+| `OPENAI_API_KEY`     | OpenAI API key          | (required)     |
+| `OPENAI_MODEL`       | GPT model to use        | gpt-4o         |
+| `TEMPORAL_ADDRESS`   | Temporal server address | localhost:7233 |
+| `TEMPORAL_NAMESPACE` | Temporal namespace      | default        |
+| `STORAGE_PATH`       | Base storage directory  | ./storage      |
+| `LOG_LEVEL`          | Logging level           | info           |
 
 ### Docker Deployment
 
@@ -379,6 +379,7 @@ docker run -p 3000:3000 \
 ### Temporal Connection Failed
 
 Ensure Temporal is running:
+
 ```bash
 docker-compose ps
 docker-compose logs temporal
@@ -387,6 +388,7 @@ docker-compose logs temporal
 ### OpenAI Rate Limits
 
 The system uses retry logic with exponential backoff. For high volume:
+
 - Use a higher-tier OpenAI plan
 - Implement request queuing
 - Consider using Azure OpenAI
@@ -394,6 +396,7 @@ The system uses retry logic with exponential backoff. For high volume:
 ### PDF Generation Issues
 
 Ensure Puppeteer dependencies are installed:
+
 ```bash
 # macOS
 brew install chromium
@@ -401,16 +404,3 @@ brew install chromium
 # Ubuntu/Debian
 apt-get install chromium-browser
 ```
-
-## License
-
-MIT
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Run tests and linting
-5. Submit a pull request
-

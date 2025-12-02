@@ -63,9 +63,11 @@ export type ReportConfig = z.infer<typeof ReportConfigSchema>;
 
 export const StructuredDataSchema = z.object({
   type: z.literal('structured'),
-  format: z.enum(['json', 'csv']),
+  format: z.enum(['json', 'csv', 'xlsx']),
   data: z.union([z.string(), z.array(z.record(z.unknown()))]),
   schemaHints: z.record(ColumnTypeSchema).optional(),
+  // For xlsx files uploaded via multipart, this contains the sheet name to use (optional)
+  sheetName: z.string().optional(),
 });
 export type StructuredData = z.infer<typeof StructuredDataSchema>;
 

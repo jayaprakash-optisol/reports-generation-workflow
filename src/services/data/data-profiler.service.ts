@@ -1,4 +1,5 @@
 import { parse } from 'csv-parse/sync';
+import * as XLSX from 'xlsx';
 
 import { createModuleLogger, type IDataProfiler } from '../../core/index.js';
 import type {
@@ -42,24 +43,60 @@ export class DataProfiler implements IDataProfiler {
   }
 
   /**
-   * Parse structured data (JSON or CSV)
+   * Parse structured data (JSON, CSV, or Excel)
    */
   private parseStructuredData(input: StructuredData): Record<string, unknown>[] {
-    if (input.format === 'csv') {
-      const csvString = typeof input.data === 'string' ? input.data : '';
-      return parse(csvString, {
-        columns: true,
-        skip_empty_lines: true,
-        cast: true,
-        cast_date: true,
-      });
+    switch (input.format) {
+      case 'csv': {
+        const csvString = typeof input.data === 'string' ? input.data : '';
+        return parse(csvString, {
+          columns: true,
+          skip_empty_lines: true,
+          cast: true,
+          cast_date: true,
+        });
+      }
+      case 'xlsx':
+        return this.parseExcelData(input.data, input.sheetName);
+      case 'json':
+      default:
+        if (typeof input.data === 'string') {
+          return JSON.parse(input.data);
+        }
+        return input.data;
+    }
+  }
+
+  /**
+   * Parse Excel file data
+   */
+  private parseExcelData(
+    data: string | Record<string, unknown>[],
+    sheetName?: string
+  ): Record<string, unknown>[] {
+    // If data is already parsed array, return it
+    if (Array.isArray(data)) {
+      return data;
     }
 
-    // JSON format
-    if (typeof input.data === 'string') {
-      return JSON.parse(input.data);
+    // Parse base64 encoded Excel data
+    const buffer = Buffer.from(data, 'base64');
+    const workbook = XLSX.read(buffer, { type: 'buffer', cellDates: true });
+
+    // Use specified sheet or first sheet
+    const targetSheet = sheetName ?? workbook.SheetNames[0];
+    const worksheet = workbook.Sheets[targetSheet];
+
+    if (!worksheet) {
+      logger.warn(`Sheet "${targetSheet}" not found, using first sheet`);
+      const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+      return XLSX.utils.sheet_to_json(firstSheet);
     }
-    return input.data;
+
+    const records = XLSX.utils.sheet_to_json<Record<string, unknown>>(worksheet);
+    logger.info(`Parsed Excel file: ${records.length} rows from sheet "${targetSheet}"`);
+
+    return records;
   }
 
   /**

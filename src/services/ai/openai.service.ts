@@ -225,7 +225,7 @@ Focus on performance data, error analysis, and root causes. Use technical termin
   /**
    * Build data context string for LLM using TOON format for efficiency
    * TOON reduces token usage by ~40-60% compared to JSON
-   * @see https://github.com/toon-format/toon
+   *
    */
   private buildDataContext(
     dataProfile: DataProfile,

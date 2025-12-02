@@ -140,6 +140,19 @@ Content-Type: application/json
 }
 
 ### ============================================
+### Create Report with Excel Data (Base64 encoded)
+### Note: For file upload, use the /reports/upload endpoint with multipart/form-data
+### This example shows the JSON API with base64-encoded Excel data
+### ============================================
+
+# To test Excel upload via multipart/form-data, use curl:
+# curl -X POST http://localhost:3000/api/reports/upload \
+#   -F "files=@data.xlsx" \
+#   -F "title=Excel Sales Report" \
+#   -F "style=business" \
+#   -F "outputFormats=PDF,HTML"
+
+### ============================================
 ### Get Report Status
 ### Replace {reportId} with actual ID from create response
 ### ============================================
