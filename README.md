@@ -13,26 +13,19 @@ An intelligent report generation system that transforms structured and unstructu
 
 ## Architecture
 
-```
-┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
-│   REST API      │────▶│  Temporal       │────▶│   Activities    │
-│   (Express)     │     │  Workflows      │     │                 │
-└─────────────────┘     └─────────────────┘     └─────────────────┘
-                                                        │
-                        ┌───────────────────────────────┼───────────────────────────────┐
-                        │                               │                               │
-                        ▼                               ▼                               ▼
-                ┌───────────────┐              ┌───────────────┐              ┌───────────────┐
-                │ Data Profiler │              │ OpenAI Service│              │ Chart Service │
-                └───────────────┘              └───────────────┘              └───────────────┘
-                                                        │
-                        ┌───────────────────────────────┼───────────────────────────────┐
-                        │                               │                               │
-                        ▼                               ▼                               ▼
-                ┌───────────────┐              ┌───────────────┐              ┌───────────────┐
-                │ HTML Generator│              │ PDF Generator │              │ DOCX Generator│
-                └───────────────┘              └───────────────┘              └───────────────┘
-```
+![System Architecture](./Architecture.png)
+
+### Components Overview
+
+| Layer                | Components                                     | Description                              |
+| -------------------- | ---------------------------------------------- | ---------------------------------------- |
+| **Clients**          | Web App, API Clients, CLI                      | User interfaces for report generation    |
+| **API Service**      | Express.js, Multer, Zod                        | REST API with file upload and validation |
+| **Workflow Engine**  | Temporal Server, Worker, UI                    | Durable workflow orchestration           |
+| **Processing Layer** | Data Profiler, Chart Generator, Doc Generators | Data analysis and document creation      |
+| **AI Layer**         | LLM Service, OpenAI API                        | AI-powered insight generation            |
+| **Storage Layer**    | MinIO/S3, PostgreSQL                           | Object storage and Temporal persistence  |
+| **Observability**    | Pino Logger, Prometheus, OpenTelemetry         | Logging and monitoring                   |
 
 ## Prerequisites
 
