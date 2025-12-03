@@ -152,7 +152,7 @@ export class DataProfiler implements IDataProfiler {
       };
 
       if (type === 'numeric') {
-        const numbers = nonNullValues.map(Number).filter(n => !isNaN(n));
+        const numbers = nonNullValues.map(Number).filter(n => !Number.isNaN(n));
         if (numbers.length > 0) {
           profile.min = Math.min(...numbers);
           profile.max = Math.max(...numbers);
@@ -165,8 +165,9 @@ export class DataProfiler implements IDataProfiler {
       } else if (type === 'datetime') {
         const dates = nonNullValues.filter((v): v is Date => v instanceof Date);
         if (dates.length > 0) {
-          profile.min = dates.reduce((a, b) => (a < b ? a : b)).toISOString();
-          profile.max = dates.reduce((a, b) => (a > b ? a : b)).toISOString();
+          const timestamps = dates.map(d => d.getTime());
+          profile.min = new Date(Math.min(...timestamps)).toISOString();
+          profile.max = new Date(Math.max(...timestamps)).toISOString();
         }
       }
 
@@ -192,7 +193,9 @@ export class DataProfiler implements IDataProfiler {
 
     // Check for numbers
     const numCount = nonNullValues.filter(
-      v => typeof v === 'number' || (typeof v === 'string' && !isNaN(Number(v)) && v.trim() !== '')
+      v =>
+        typeof v === 'number' ||
+        (typeof v === 'string' && !Number.isNaN(Number(v)) && v.trim() !== '')
     ).length;
     if (numCount / nonNullValues.length > 0.8) return 'numeric';
 
@@ -209,7 +212,8 @@ export class DataProfiler implements IDataProfiler {
   private isDateString(value: unknown): boolean {
     if (typeof value !== 'string') return false;
     const date = new Date(value);
-    return !Number.isNaN(date.getTime()) && value.match(/\d{4}[-/]\d{1,2}[-/]\d{1,2}/) !== null;
+    const datePattern = /\d{4}[-/]\d{1,2}[-/]\d{1,2}/;
+    return !Number.isNaN(date.getTime()) && datePattern.exec(value) !== null;
   }
 
   /**
@@ -252,75 +256,92 @@ export class DataProfiler implements IDataProfiler {
     columns: ColumnProfile[],
     records: Record<string, unknown>[]
   ): ChartSuggestion[] {
-    const suggestions: ChartSuggestion[] = [];
-
     const dateColumns = columns.filter(c => c.type === 'datetime');
     const numericColumns = columns.filter(c => c.type === 'numeric');
     const categoricalColumns = columns.filter(c => c.type === 'categorical');
 
-    // Time series charts
-    if (dateColumns.length > 0 && numericColumns.length > 0) {
-      for (const numCol of numericColumns.slice(0, 3)) {
-        suggestions.push({
-          type: 'line' as ChartType,
-          title: `${numCol.name} Over Time`,
-          xAxis: dateColumns[0].name,
-          yAxis: numCol.name,
-          reason: 'Time-series data detected - line chart recommended for trend visualization',
-        });
-      }
-    }
+    const suggestions: ChartSuggestion[] = [
+      ...this.suggestTimeSeriesCharts(dateColumns, numericColumns),
+      ...this.suggestCategoryCharts(categoricalColumns, numericColumns),
+      ...this.suggestDistributionCharts(categoricalColumns),
+      ...this.suggestMultiMetricChart(categoricalColumns, numericColumns),
+      ...this.suggestSummaryTable(records),
+    ];
 
-    // Category comparisons
-    if (categoricalColumns.length > 0 && numericColumns.length > 0) {
-      for (const catCol of categoricalColumns.slice(0, 2)) {
-        for (const numCol of numericColumns.slice(0, 2)) {
-          suggestions.push({
-            type: 'bar' as ChartType,
-            title: `${numCol.name} by ${catCol.name}`,
-            xAxis: catCol.name,
-            yAxis: numCol.name,
-            reason: 'Categorical grouping detected - bar chart recommended for comparison',
-          });
-        }
-      }
-    }
+    return suggestions.slice(0, 8); // Limit to 8 suggestions
+  }
 
-    // Distribution charts
-    if (categoricalColumns.length > 0) {
-      for (const catCol of categoricalColumns.slice(0, 2)) {
-        if (catCol.uniqueCount <= 8) {
-          suggestions.push({
-            type: 'pie' as ChartType,
-            title: `${catCol.name} Distribution`,
-            xAxis: catCol.name,
-            reason: 'Low-cardinality categorical data - pie chart recommended for distribution',
-          });
-        }
-      }
-    }
+  private suggestTimeSeriesCharts(
+    dateColumns: ColumnProfile[],
+    numericColumns: ColumnProfile[]
+  ): ChartSuggestion[] {
+    if (dateColumns.length === 0 || numericColumns.length === 0) return [];
 
-    // Multi-metric comparison
-    if (numericColumns.length >= 2 && categoricalColumns.length > 0) {
-      suggestions.push({
+    return numericColumns.slice(0, 3).map(numCol => ({
+      type: 'line' as ChartType,
+      title: `${numCol.name} Over Time`,
+      xAxis: dateColumns[0].name,
+      yAxis: numCol.name,
+      reason: 'Time-series data detected - line chart recommended for trend visualization',
+    }));
+  }
+
+  private suggestCategoryCharts(
+    categoricalColumns: ColumnProfile[],
+    numericColumns: ColumnProfile[]
+  ): ChartSuggestion[] {
+    if (categoricalColumns.length === 0 || numericColumns.length === 0) return [];
+
+    return categoricalColumns.slice(0, 2).flatMap(catCol =>
+      numericColumns.slice(0, 2).map(numCol => ({
+        type: 'bar' as ChartType,
+        title: `${numCol.name} by ${catCol.name}`,
+        xAxis: catCol.name,
+        yAxis: numCol.name,
+        reason: 'Categorical grouping detected - bar chart recommended for comparison',
+      }))
+    );
+  }
+
+  private suggestDistributionCharts(categoricalColumns: ColumnProfile[]): ChartSuggestion[] {
+    return categoricalColumns
+      .slice(0, 2)
+      .filter(catCol => catCol.uniqueCount <= 8)
+      .map(catCol => ({
+        type: 'pie' as ChartType,
+        title: `${catCol.name} Distribution`,
+        xAxis: catCol.name,
+        reason: 'Low-cardinality categorical data - pie chart recommended for distribution',
+      }));
+  }
+
+  private suggestMultiMetricChart(
+    categoricalColumns: ColumnProfile[],
+    numericColumns: ColumnProfile[]
+  ): ChartSuggestion[] {
+    if (numericColumns.length < 2 || categoricalColumns.length === 0) return [];
+
+    return [
+      {
         type: 'stacked_bar' as ChartType,
         title: 'Multi-Metric Comparison',
         xAxis: categoricalColumns[0].name,
         yAxis: numericColumns.slice(0, 3).map(c => c.name),
         reason: 'Multiple numeric metrics with categories - stacked bar recommended',
-      });
-    }
+      },
+    ];
+  }
 
-    // Summary table
-    if (records.length > 0) {
-      suggestions.push({
+  private suggestSummaryTable(records: Record<string, unknown>[]): ChartSuggestion[] {
+    if (records.length === 0) return [];
+
+    return [
+      {
         type: 'table' as ChartType,
         title: 'Key Metrics Summary',
         reason: 'Tabular summary of key statistics',
-      });
-    }
-
-    return suggestions.slice(0, 8); // Limit to 8 suggestions
+      },
+    ];
   }
 
   /**

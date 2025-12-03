@@ -467,11 +467,8 @@ export class DOCXGenerator implements IDOCXGenerator {
                   }),
                 ],
                 spacing: { before: 200, after: 100 },
-              })
-            );
-
-            // Chart caption
-            elements.push(
+              }),
+              // Chart caption
               new Paragraph({
                 alignment: AlignmentType.CENTER,
                 children: [

@@ -76,7 +76,10 @@ export class HTMLGenerator implements IHTMLGenerator {
   generateTable(tableData: TableData): string {
     const headers = tableData.headers.map(h => `<th>${this.escapeHtml(h)}</th>`).join('');
     const rows = tableData.rows
-      .map(row => `<tr>${row.map(cell => `<td>${this.escapeHtml(cell)}</td>`).join('')}</tr>`)
+      .map(row => {
+        const cells = row.map(cell => `<td>${this.escapeHtml(cell)}</td>`).join('');
+        return `<tr>${cells}</tr>`;
+      })
       .join('');
 
     return `
@@ -157,7 +160,7 @@ export class HTMLGenerator implements IHTMLGenerator {
     report: Report,
     companyName: string,
     date: string,
-    palette: (typeof COLOR_PALETTES)[keyof typeof COLOR_PALETTES]
+    _palette: (typeof COLOR_PALETTES)[keyof typeof COLOR_PALETTES]
   ): string {
     const styleLabel = this.getStyleLabel(report.style);
 
@@ -218,7 +221,7 @@ export class HTMLGenerator implements IHTMLGenerator {
     narrative: GeneratedNarrative,
     dataProfile: DataProfile,
     style: ReportStyle,
-    palette: (typeof COLOR_PALETTES)[keyof typeof COLOR_PALETTES]
+    _palette: (typeof COLOR_PALETTES)[keyof typeof COLOR_PALETTES]
   ): string {
     const summaryTitle = style === 'research' ? 'Abstract' : 'Executive Summary';
     const completeness = this.calculateCompleteness(dataProfile);
@@ -609,7 +612,7 @@ export class HTMLGenerator implements IHTMLGenerator {
    */
   private generateInfographicCSS(
     palette: (typeof COLOR_PALETTES)[keyof typeof COLOR_PALETTES],
-    styleConfig: StyleConfig
+    _styleConfig: StyleConfig
   ): string {
     return `
       @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap');

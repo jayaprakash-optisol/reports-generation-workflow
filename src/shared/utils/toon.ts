@@ -98,7 +98,8 @@ ${encodeToon(data)}
  */
 export function parseToonResponse<T>(response: string): T | null {
   // Try to extract TOON block from response
-  const toonMatch = response.match(/```toon\s*([\s\S]*?)\s*```/);
+  const toonPattern = /```toon\s*([\s\S]*?)\s*```/;
+  const toonMatch = toonPattern.exec(response);
   if (toonMatch?.[1]) {
     try {
       return decodeToon<T>(toonMatch[1]);
@@ -108,7 +109,8 @@ export function parseToonResponse<T>(response: string): T | null {
   }
 
   // Try to extract JSON block
-  const jsonMatch = response.match(/```json\s*([\s\S]*?)\s*```/);
+  const jsonPattern = /```json\s*([\s\S]*?)\s*```/;
+  const jsonMatch = jsonPattern.exec(response);
   if (jsonMatch?.[1]) {
     try {
       return JSON.parse(jsonMatch[1]) as T;
