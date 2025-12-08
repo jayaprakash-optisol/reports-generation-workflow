@@ -418,3 +418,36 @@ brew install chromium
 # Ubuntu/Debian
 apt-get install chromium-browser
 ```
+
+## Upcoming Features
+
+The following features are planned for the next version:
+
+### Access Control & Role-Based Permissions
+
+- **Role-Based Access Control (RBAC)**: Implement user roles (Admin, Editor, Viewer) with granular permissions
+- **User Management**: User registration, authentication, and profile management
+
+### Report Sharing & Collaboration
+
+- **Share Reports**: Share reports with specific users or user groups
+- **Access Control Lists**: Manage who can view, download, or edit shared reports
+- **Public Links**: Generate shareable links with optional expiration and password protection
+- **Collaboration Features**: Comments, annotations, and version history for reports
+
+### Human-in-the-Loop (HIL) Approval Workflow
+
+- **Admin Approval Workflow**: All generated reports require admin approval before being accessible to other users
+- **Review Queue**: Admins can view and manage a queue of pending reports awaiting approval
+- **Approval Actions**: Admins can approve or reject reports with optional comments
+- **Notifications**:
+  - Report creators receive notifications when their reports are:
+    - Submitted for review
+    - Approved (with optional admin comments)
+    - Rejected (with rejection reason/comments)
+  - Admins receive notifications when new reports are submitted for review
+- **Status Tracking**: Reports have additional statuses:
+  - `PENDING_APPROVAL` - Awaiting admin review
+  - `APPROVED` - Approved and accessible to authorized users
+  - `REJECTED` - Rejected with reason, visible only to creator and admins
+- **Revision Workflow**: Rejected reports can be revised and resubmitted for approval
