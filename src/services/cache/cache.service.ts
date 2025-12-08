@@ -1,16 +1,8 @@
 import { Redis } from 'ioredis';
 
-import { config, createModuleLogger } from '../../core/index.js';
+import { config, createModuleLogger, type ICacheService } from '../../core/index.js';
 
 const logger = createModuleLogger('cache-service');
-
-export interface ICacheService {
-  get<T>(key: string): Promise<T | null>;
-  set(key: string, value: unknown, ttl?: number): Promise<void>;
-  delete(key: string): Promise<void>;
-  clear(): Promise<void>;
-  exists(key: string): Promise<boolean>;
-}
 
 export class RedisCacheService implements ICacheService {
   private readonly client: Redis;

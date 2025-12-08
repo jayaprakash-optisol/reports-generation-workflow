@@ -31,7 +31,7 @@ export {
 } from './storage/index.js';
 
 // Cache Services
-export { cacheService, createCacheService, type ICacheService } from './cache/index.js';
+export { cacheService, createCacheService } from './cache/index.js';
 
 // Cost Tracking Services
-export { costTracker, CostTrackerService, type CostMetrics } from './cost/index.js';
+export { costTracker, CostTrackerService } from './cost/index.js';

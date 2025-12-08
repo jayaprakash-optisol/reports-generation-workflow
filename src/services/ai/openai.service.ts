@@ -3,9 +3,9 @@
 import OpenAI from 'openai';
 
 import { config, createModuleLogger, type ILLMService } from '../../core/index.js';
-import { costTracker } from '../cost/index.js';
 import type { DataProfile, GeneratedNarrative, ReportStyle } from '../../shared/types/index.js';
 import { toonUtils } from '../../shared/utils/index.js';
+import { costTracker } from '../cost/index.js';
 
 const logger = createModuleLogger('openai-service');
 

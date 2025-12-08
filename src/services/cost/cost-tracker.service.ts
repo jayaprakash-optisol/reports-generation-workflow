@@ -1,22 +1,10 @@
 import { config, createModuleLogger } from '../../core/index.js';
+import type { AggregatedCosts, CostMetrics } from '../../shared/types/index.js';
 import { storage } from '../index.js';
 
 const logger = createModuleLogger('cost-tracker');
 
-export interface CostMetrics {
-  reportId: string;
-  timestamp: string;
-  openai: {
-    promptTokens: number;
-    completionTokens: number;
-    totalTokens: number;
-    imagesGenerated: number;
-    estimatedCost: number;
-  };
-}
-
 export class CostTrackerService {
-  private static readonly COST_METRICS_KEY = 'cost-metrics';
 
   /**
    * Track OpenAI API usage and calculate costs
@@ -97,12 +85,7 @@ export class CostTrackerService {
   /**
    * Get aggregated costs across all reports
    */
-  async getAggregatedCosts(): Promise<{
-    totalReports: number;
-    totalTokens: number;
-    totalCost: number;
-    averageCostPerReport: number;
-  }> {
+  async getAggregatedCosts(): Promise<AggregatedCosts> {
     const reportIds = await storage.listReports();
     const costReports = reportIds.filter(id => id.endsWith('-costs'));
 

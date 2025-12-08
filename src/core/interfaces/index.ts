@@ -1,3 +1,4 @@
+export type { ICacheService } from './cache.interface.js';
 export type { IDataProfiler } from './data.interface.js';
 export type {
   IChartGenerator,

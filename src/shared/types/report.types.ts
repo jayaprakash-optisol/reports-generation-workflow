@@ -6,7 +6,6 @@ import {
   ColumnTypeSchema,
   OutputFormatSchema,
   ReportStyleSchema,
-  type Branding,
   type ColumnProfile,
   type OutputFormat,
   type ReportStatus,
@@ -170,5 +169,4 @@ export interface GeneratedNarrative {
   keyFindings: string[];
 }
 
-// Re-export for convenience
-export type { Branding, OutputFormat, ReportStatus, ReportStyle };
+// Re-export for convenience - these are already exported from common.types.ts

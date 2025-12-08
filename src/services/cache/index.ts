@@ -1,2 +1,2 @@
-export { cacheService, createCacheService, type ICacheService, MemoryCacheService, RedisCacheService } from './cache.service.js';
+export { cacheService, createCacheService, MemoryCacheService, RedisCacheService } from './cache.service.js';
 

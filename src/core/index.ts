@@ -1,6 +1,7 @@
 // Core exports
 export { config, type Config } from './config/index.js';
 export type {
+  ICacheService,
   IChartGenerator,
   IDataProfiler,
   IDOCXGenerator,

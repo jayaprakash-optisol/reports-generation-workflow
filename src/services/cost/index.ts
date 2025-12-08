@@ -1,2 +1,2 @@
-export { costTracker, CostTrackerService, type CostMetrics } from './cost-tracker.service.js';
+export { costTracker, CostTrackerService } from './cost-tracker.service.js';
 
