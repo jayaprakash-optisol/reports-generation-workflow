@@ -3,7 +3,7 @@ import express from 'express';
 import helmet from 'helmet';
 
 import { config, createModuleLogger } from './core/index.js';
-import { healthRoutes, reportRoutes } from './modules/index.js';
+import { healthRoutes, reportRoutes, swaggerRoutes } from './modules/index.js';
 import { storage } from './services/index.js';
 
 const logger = createModuleLogger('server');
@@ -38,6 +38,7 @@ async function main() {
   // API routes
   app.use('/api/reports', reportRoutes);
   app.use('/api/health', healthRoutes);
+  app.use('/api/docs', swaggerRoutes);
 
   // Root endpoint
   app.get('/', (_req, res) => {
@@ -54,8 +55,10 @@ async function main() {
         downloadFile: 'GET /api/reports/:reportId/files?format=PDF|DOCX|HTML',
         cancelReport: 'POST /api/reports/:reportId/cancel',
         waitForReport: 'GET /api/reports/:reportId/wait',
+        swaggerDocs: 'GET /api/docs',
+        openAPISpec: 'GET /api/docs/json',
       },
-      documentation: 'See README.md for full API documentation',
+      documentation: 'Interactive API documentation available at /api/docs',
     });
   });
 

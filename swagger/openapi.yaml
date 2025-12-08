@@ -1,0 +1,843 @@
+openapi: 3.1.0
+info:
+  title: AI Report Generator API
+  description: |
+    AI-powered report generation system that transforms structured and unstructured data
+    into professional multi-page reports using OpenAI and Temporal workflows.
+
+    ## Features
+    - AI-Powered Content Generation using OpenAI GPT models
+    - Multiple Report Styles (Business, Research, Technical)
+    - Automatic Visualizations with intelligent chart suggestions
+    - Multiple Output Formats (PDF, DOCX, HTML)
+    - Batch Processing for multiple reports
+    - Cost Tracking for OpenAI API usage
+    - Reliable Workflow Orchestration with Temporal
+  version: 1.0.0
+  contact:
+    name: API Support
+    email: support@example.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:3000/api
+    description: Local development server
+  - url: https://api.example.com/api
+    description: Production server
+
+tags:
+  - name: Health
+    description: Health check and system status endpoints
+  - name: Reports
+    description: Report generation and management endpoints
+  - name: Costs
+    description: Cost tracking and analytics endpoints
+
+paths:
+  /health:
+    get:
+      tags:
+        - Health
+      summary: Basic health check
+      description: Returns basic health status of the API
+      operationId: getHealth
+      responses:
+        '200':
+          description: API is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+
+  /health/detailed:
+    get:
+      tags:
+        - Health
+      summary: Detailed health check
+      description: Returns detailed health status including all dependencies (Storage, Temporal, Redis)
+      operationId: getDetailedHealth
+      responses:
+        '200':
+          description: Health status with dependency checks
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DetailedHealthResponse'
+        '503':
+          description: Service is unhealthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DetailedHealthResponse'
+
+  /health/ready:
+    get:
+      tags:
+        - Health
+      summary: Readiness probe
+      description: Kubernetes readiness probe endpoint
+      operationId: getReadiness
+      responses:
+        '200':
+          description: Service is ready
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ready
+                  timestamp:
+                    type: string
+                    format: date-time
+        '503':
+          description: Service is not ready
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: not ready
+                  error:
+                    type: string
+
+  /health/live:
+    get:
+      tags:
+        - Health
+      summary: Liveness probe
+      description: Kubernetes liveness probe endpoint
+      operationId: getLiveness
+      responses:
+        '200':
+          description: Service is alive
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: alive
+                  timestamp:
+                    type: string
+                    format: date-time
+
+  /reports:
+    post:
+      tags:
+        - Reports
+      summary: Create a new report
+      description: Create a report from structured/unstructured data using JSON payload
+      operationId: createReport
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateReportRequest'
+            examples:
+              business:
+                summary: Business Report Example
+                value:
+                  data:
+                    - type: structured
+                      format: json
+                      data:
+                        - month: January
+                          revenue: 125000
+                          expenses: 98000
+                          customers: 1250
+                        - month: February
+                          revenue: 132000
+                          expenses: 102000
+                          customers: 1320
+                    - type: unstructured
+                      format: text
+                      content: 'Q1 Performance Notes: Strong growth momentum...'
+                  config:
+                    title: Q1 2024 Business Performance Report
+                    style: business
+                    outputFormats:
+                      - PDF
+                      - HTML
+                    branding:
+                      primaryColor: '#1a365d'
+                      companyName: 'Acme Corporation'
+      responses:
+        '202':
+          description: Report generation started
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReportCreatedResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    get:
+      tags:
+        - Reports
+      summary: List all reports
+      description: Get a list of all generated reports
+      operationId: listReports
+      responses:
+        '200':
+          description: List of reports
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: integer
+                  reports:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Report'
+
+  /reports/batch:
+    post:
+      tags:
+        - Reports
+      summary: Create multiple reports in batch
+      description: Create up to 50 reports in a single request
+      operationId: createBatchReports
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BatchReportRequest'
+      responses:
+        '202':
+          description: Batch report generation started
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BatchReportResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /reports/upload:
+    post:
+      tags:
+        - Reports
+      summary: Create report from file upload
+      description: Create a report by uploading files (CSV, JSON, Excel, text, markdown)
+      operationId: uploadReport
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - files
+                - title
+              properties:
+                files:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+                  description: One or more files to process (max 5 files)
+                title:
+                  type: string
+                  description: Report title
+                  example: Sales Analysis Report
+                style:
+                  type: string
+                  enum: [business, research, technical]
+                  default: business
+                outputFormats:
+                  type: string
+                  description: Comma-separated list of formats (PDF, DOCX, HTML)
+                  example: PDF,HTML
+                branding:
+                  type: string
+                  description: JSON string with branding configuration
+      responses:
+        '202':
+          description: Report generation started
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReportCreatedResponse'
+        '400':
+          description: Invalid request or file type
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /reports/{reportId}:
+    get:
+      tags:
+        - Reports
+      summary: Get report status
+      description: Get the current status and details of a report
+      operationId: getReport
+      parameters:
+        - name: reportId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Unique report identifier
+      responses:
+        '200':
+          description: Report details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Report'
+        '404':
+          description: Report not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /reports/{reportId}/files:
+    get:
+      tags:
+        - Reports
+      summary: Download report file
+      description: Download a generated report in the specified format
+      operationId: downloadReportFile
+      parameters:
+        - name: reportId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: format
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [PDF, DOCX, HTML]
+          description: Output format
+      responses:
+        '200':
+          description: Report file
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+            application/vnd.openxmlformats-officedocument.wordprocessingml.document:
+              schema:
+                type: string
+                format: binary
+            text/html:
+              schema:
+                type: string
+        '404':
+          description: File not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /reports/{reportId}/cancel:
+    post:
+      tags:
+        - Reports
+      summary: Cancel report generation
+      description: Cancel an in-progress report generation
+      operationId: cancelReport
+      parameters:
+        - name: reportId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Cancellation signal sent
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Cancellation signal sent
+                  reportId:
+                    type: string
+        '400':
+          description: Failed to cancel
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /reports/{reportId}/wait:
+    get:
+      tags:
+        - Reports
+      summary: Wait for report completion
+      description: Blocking endpoint that waits for report generation to complete
+      operationId: waitForReport
+      parameters:
+        - name: reportId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Report completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkflowResult'
+        '404':
+          description: Workflow not found or failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /reports/{reportId}/costs:
+    get:
+      tags:
+        - Costs
+      summary: Get report cost metrics
+      description: Get OpenAI API cost metrics for a specific report
+      operationId: getReportCosts
+      parameters:
+        - name: reportId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Cost metrics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CostMetrics'
+        '404':
+          description: Cost metrics not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /reports/costs/aggregated:
+    get:
+      tags:
+        - Costs
+      summary: Get aggregated costs
+      description: Get aggregated cost statistics across all reports
+      operationId: getAggregatedCosts
+      responses:
+        '200':
+          description: Aggregated cost statistics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AggregatedCosts'
+
+components:
+  schemas:
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: healthy
+        timestamp:
+          type: string
+          format: date-time
+        version:
+          type: string
+          example: '1.0.0'
+
+    DetailedHealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [healthy, degraded, unhealthy]
+        timestamp:
+          type: string
+          format: date-time
+        version:
+          type: string
+        checks:
+          type: object
+          properties:
+            api:
+              type: object
+              properties:
+                status:
+                  type: string
+                responseTime:
+                  type: integer
+            storage:
+              type: object
+              properties:
+                status:
+                  type: string
+                type:
+                  type: string
+                error:
+                  type: string
+            temporal:
+              type: object
+              properties:
+                status:
+                  type: string
+                address:
+                  type: string
+                error:
+                  type: string
+            redis:
+              type: object
+              properties:
+                status:
+                  type: string
+                error:
+                  type: string
+
+    CreateReportRequest:
+      type: object
+      required:
+        - data
+        - config
+      properties:
+        data:
+          type: array
+          minItems: 1
+          items:
+            oneOf:
+              - $ref: '#/components/schemas/StructuredData'
+              - $ref: '#/components/schemas/UnstructuredData'
+        config:
+          $ref: '#/components/schemas/ReportConfig'
+
+    StructuredData:
+      type: object
+      required:
+        - type
+        - format
+        - data
+      properties:
+        type:
+          type: string
+          enum: [structured]
+        format:
+          type: string
+          enum: [json, csv, xlsx]
+        data:
+          oneOf:
+            - type: string
+            - type: array
+              items:
+                type: object
+        schemaHints:
+          type: object
+          additionalProperties:
+            type: string
+            enum: [numeric, categorical, datetime, text, boolean, unknown]
+        sheetName:
+          type: string
+          description: Sheet name for Excel files
+
+    UnstructuredData:
+      type: object
+      required:
+        - type
+        - format
+        - content
+      properties:
+        type:
+          type: string
+          enum: [unstructured]
+        format:
+          type: string
+          enum: [text, markdown]
+        content:
+          type: string
+          maxLength: 100000
+
+    ReportConfig:
+      type: object
+      required:
+        - title
+      properties:
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+        style:
+          type: string
+          enum: [business, research, technical]
+          default: business
+        outputFormats:
+          type: array
+          minItems: 1
+          items:
+            type: string
+            enum: [PDF, DOCX, HTML]
+          default: [PDF]
+        branding:
+          $ref: '#/components/schemas/Branding'
+        sectionsToInclude:
+          type: array
+          items:
+            type: string
+        sectionsToExclude:
+          type: array
+          items:
+            type: string
+        authorName:
+          type: string
+        customPromptInstructions:
+          type: string
+          maxLength: 1000
+
+    Branding:
+      type: object
+      properties:
+        logoUrl:
+          type: string
+          format: uri
+        primaryColor:
+          type: string
+          pattern: '^#[0-9A-Fa-f]{6}$'
+          default: '#1a365d'
+        secondaryColor:
+          type: string
+          pattern: '^#[0-9A-Fa-f]{6}$'
+          default: '#2b6cb0'
+        accentColor:
+          type: string
+          pattern: '^#[0-9A-Fa-f]{6}$'
+          default: '#ed8936'
+        fontFamily:
+          type: string
+          default: 'Inter, system-ui, sans-serif'
+        companyName:
+          type: string
+
+    BatchReportRequest:
+      type: object
+      required:
+        - requests
+      properties:
+        requests:
+          type: array
+          minItems: 1
+          maxItems: 50
+          items:
+            $ref: '#/components/schemas/CreateReportRequest'
+
+    ReportCreatedResponse:
+      type: object
+      properties:
+        reportId:
+          type: string
+        workflowId:
+          type: string
+        status:
+          type: string
+          enum: [QUEUED]
+        statusUrl:
+          type: string
+        message:
+          type: string
+        filesProcessed:
+          type: integer
+          description: Number of files processed (for upload endpoint)
+
+    BatchReportResponse:
+      type: object
+      properties:
+        batchId:
+          type: string
+        total:
+          type: integer
+        successful:
+          type: integer
+        failed:
+          type: integer
+        reports:
+          type: array
+          items:
+            type: object
+            properties:
+              reportId:
+                type: string
+              workflowId:
+                type: string
+              title:
+                type: string
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              index:
+                type: integer
+              error:
+                type: string
+
+    Report:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        style:
+          type: string
+          enum: [business, research, technical]
+        status:
+          type: string
+          enum:
+            [
+              QUEUED,
+              DATA_PROFILING,
+              INSIGHT_GENERATION,
+              CHART_GENERATION,
+              LAYOUT_RENDERING,
+              EXPORTING,
+              COMPLETED,
+              FAILED,
+            ]
+        outputFormats:
+          type: array
+          items:
+            type: string
+            enum: [PDF, DOCX, HTML]
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        completedAt:
+          type: string
+          format: date-time
+        errorMessage:
+          type: string
+        progress:
+          type: integer
+          minimum: 0
+          maximum: 100
+        currentStep:
+          type: string
+        files:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReportFile'
+        workflow:
+          type: object
+          properties:
+            status:
+              type: string
+            progress:
+              type: integer
+            currentStep:
+              type: string
+            error:
+              type: string
+        execution:
+          type: object
+          properties:
+            status:
+              type: string
+            startTime:
+              type: string
+              format: date-time
+            closeTime:
+              type: string
+              format: date-time
+
+    ReportFile:
+      type: object
+      properties:
+        format:
+          type: string
+          enum: [PDF, DOCX, HTML]
+        url:
+          type: string
+        size:
+          type: integer
+        generatedAt:
+          type: string
+          format: date-time
+
+    WorkflowResult:
+      type: object
+      properties:
+        report:
+          $ref: '#/components/schemas/Report'
+        success:
+          type: boolean
+
+    CostMetrics:
+      type: object
+      properties:
+        reportId:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        openai:
+          type: object
+          properties:
+            promptTokens:
+              type: integer
+            completionTokens:
+              type: integer
+            totalTokens:
+              type: integer
+            imagesGenerated:
+              type: integer
+            estimatedCost:
+              type: number
+              format: float
+
+    AggregatedCosts:
+      type: object
+      properties:
+        totalReports:
+          type: integer
+        totalTokens:
+          type: integer
+        totalCost:
+          type: number
+          format: float
+        averageCostPerReport:
+          type: number
+          format: float
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+          description: Validation error details

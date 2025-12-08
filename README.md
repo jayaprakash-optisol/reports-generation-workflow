@@ -78,6 +78,27 @@ npm run dev
 
 The API will be available at http://localhost:3000.
 
+### 6. Access API Documentation
+
+Interactive Swagger documentation is available at:
+
+- **Swagger UI**: http://localhost:3000/api/docs
+- **OpenAPI JSON**: http://localhost:3000/api/docs/json
+- **OpenAPI YAML**: http://localhost:3000/api/docs/yaml
+
+The OpenAPI specification is maintained in the `swagger/` folder and is separate from the codebase.
+
+## API Documentation
+
+### Interactive Documentation
+
+The API includes comprehensive Swagger/OpenAPI documentation:
+
+- **Swagger UI**: Visit http://localhost:3000/api/docs for interactive API documentation
+- **OpenAPI Spec**: Available at http://localhost:3000/api/docs/json (JSON) or `/api/docs/yaml` (YAML)
+
+The OpenAPI specification is maintained separately in the `swagger/` folder and is not embedded in the code.
+
 ## API Reference
 
 ### Create Report
