@@ -3,6 +3,7 @@
 import OpenAI from 'openai';
 
 import { config, createModuleLogger, type ILLMService } from '../../core/index.js';
+import { costTracker } from '../cost/index.js';
 import type { DataProfile, GeneratedNarrative, ReportStyle } from '../../shared/types/index.js';
 import { toonUtils } from '../../shared/utils/index.js';
 
@@ -28,7 +29,8 @@ export class OpenAIService implements ILLMService {
     textContent: string[],
     style: ReportStyle,
     title: string,
-    customInstructions?: string
+    customInstructions?: string,
+    reportId?: string
   ): Promise<GeneratedNarrative> {
     const stylePrompt = this.getStylePrompt(style);
     const dataContext = this.buildDataContext(dataProfile, parsedData, textContent);
@@ -94,6 +96,14 @@ Ensure all content is data-driven, professional, and appropriate for the ${style
       const content = response.choices[0]?.message?.content;
       if (!content) {
         throw new Error('Empty response from OpenAI');
+      }
+
+      // Track costs
+      if (response.usage && reportId) {
+        await costTracker.trackOpenAIUsage(reportId, {
+          promptTokens: response.usage.prompt_tokens,
+          completionTokens: response.usage.completion_tokens,
+        });
       }
 
       const parsed = JSON.parse(content) as GeneratedNarrative;
@@ -166,7 +176,8 @@ Be concise and insight-driven.`;
    */
   async generateImage(
     prompt: string,
-    size: '1024x1024' | '1792x1024' | '1024x1792' = '1024x1024'
+    size: '1024x1024' | '1792x1024' | '1024x1792' = '1024x1024',
+    reportId?: string
   ): Promise<string> {
     try {
       const response = await this.client.images.generate({
@@ -180,6 +191,13 @@ Be concise and insight-driven.`;
       const imageData = response.data?.[0]?.b64_json;
       if (!imageData) {
         throw new Error('No image data returned');
+      }
+
+      // Track image generation cost
+      if (reportId) {
+        await costTracker.trackOpenAIUsage(reportId, {
+          imagesGenerated: 1,
+        });
       }
 
       logger.info('Generated AI image successfully');

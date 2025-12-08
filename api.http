@@ -10,6 +10,24 @@
 GET {{baseUrl}}/health
 
 ### ============================================
+### Detailed Health Check
+### ============================================
+
+GET {{baseUrl}}/health/detailed
+
+### ============================================
+### Readiness Probe
+### ============================================
+
+GET {{baseUrl}}/health/ready
+
+### ============================================
+### Liveness Probe
+### ============================================
+
+GET {{baseUrl}}/health/live
+
+### ============================================
 ### Create Business Report (JSON Data)
 ### ============================================
 
@@ -201,4 +219,65 @@ POST {{baseUrl}}/reports/{{reportId}}/cancel
 ### ============================================
 
 GET {{baseUrl}}/reports/{{reportId}}/wait
+
+### ============================================
+### Create Batch Reports
+### Generate multiple reports in one request
+### ============================================
+
+POST {{baseUrl}}/reports/batch
+Content-Type: application/json
+
+{
+  "requests": [
+    {
+      "data": [
+        {
+          "type": "structured",
+          "format": "json",
+          "data": [
+            {"month": "January", "revenue": 45000, "customers": 120},
+            {"month": "February", "revenue": 52000, "customers": 145},
+            {"month": "March", "revenue": 48000, "customers": 132}
+          ]
+        }
+      ],
+      "config": {
+        "title": "Q1 Business Report - Batch 1",
+        "style": "business",
+        "outputFormats": ["PDF", "HTML"]
+      }
+    },
+    {
+      "data": [
+        {
+          "type": "structured",
+          "format": "json",
+          "data": [
+            {"timestamp": "2024-06-01T08:00:00Z", "requests": 25640, "errors": 78},
+            {"timestamp": "2024-06-01T09:00:00Z", "requests": 32450, "errors": 125}
+          ]
+        }
+      ],
+      "config": {
+        "title": "System Performance Report - Batch 2",
+        "style": "technical",
+        "outputFormats": ["PDF"]
+      }
+    }
+  ]
+}
+
+### ============================================
+### Get Report Cost Metrics
+### Replace {reportId} with actual ID
+### ============================================
+
+GET {{baseUrl}}/reports/{{reportId}}/costs
+
+### ============================================
+### Get Aggregated Costs
+### ============================================
+
+GET {{baseUrl}}/reports/costs/aggregated
 

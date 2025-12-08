@@ -1,9 +1,10 @@
 import type { Request, Response } from 'express';
+import { nanoid } from 'nanoid';
 
 import { config, createModuleLogger } from '../../core/index.js';
 import { storage } from '../../services/index.js';
 import type { InputData, OutputFormat, Report, ReportConfig } from '../../shared/types/index.js';
-import { CreateReportRequestSchema } from '../../shared/types/index.js';
+import { BatchReportRequestSchema, CreateReportRequestSchema } from '../../shared/types/index.js';
 import {
   cancelWorkflow,
   getWorkflowInfo,
@@ -304,6 +305,103 @@ export class ReportController {
       logger.error('Failed to wait for report', { error });
       res.status(500).json({
         error: 'Failed to wait for report',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      });
+    }
+  }
+
+  /**
+   * Create multiple reports in batch
+   */
+  async createBatch(req: Request, res: Response): Promise<void> {
+    try {
+      // Validate request body with Zod
+      const parseResult = BatchReportRequestSchema.safeParse(req.body);
+
+      if (!parseResult.success) {
+        res.status(400).json({
+          error: 'Invalid request body',
+          details: parseResult.error.flatten(),
+        });
+        return;
+      }
+
+      const { requests } = parseResult.data;
+
+      // Start all workflows
+      const results = await Promise.allSettled(
+        requests.map(async request => {
+          const { reportId, workflowId } = await startReportGeneration(request.data, request.config);
+          return { reportId, workflowId, title: request.config.title };
+        })
+      );
+
+      const successful = results
+        .filter((r): r is PromiseFulfilledResult<{ reportId: string; workflowId: string; title: string }> => r.status === 'fulfilled')
+        .map(r => r.value);
+
+      const failed = results
+        .filter((r): r is PromiseRejectedResult => r.status === 'rejected')
+        .map((r, index) => ({
+          index,
+          error: r.reason instanceof Error ? r.reason.message : 'Unknown error',
+        }));
+
+      logger.info(`Batch report generation: ${successful.length} started, ${failed.length} failed`);
+
+      res.status(202).json({
+        batchId: nanoid(12),
+        total: requests.length,
+        successful: successful.length,
+        failed: failed.length,
+        reports: successful,
+        errors: failed.length > 0 ? failed : undefined,
+      });
+    } catch (error) {
+      logger.error('Failed to create batch reports', { error });
+      res.status(500).json({
+        error: 'Failed to start batch report generation',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      });
+    }
+  }
+
+  /**
+   * Get cost metrics for a report
+   */
+  async getCosts(req: Request, res: Response): Promise<void> {
+    try {
+      const { reportId } = req.params;
+      const { costTracker } = await import('../../services/index.js');
+      const metrics = await costTracker.getCostMetrics(reportId);
+
+      if (!metrics) {
+        res.status(404).json({ error: 'Cost metrics not found for this report' });
+        return;
+      }
+
+      res.json(metrics);
+    } catch (error) {
+      logger.error('Failed to get cost metrics', { error });
+      res.status(500).json({
+        error: 'Failed to get cost metrics',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      });
+    }
+  }
+
+  /**
+   * Get aggregated costs across all reports
+   */
+  async getAggregatedCosts(_req: Request, res: Response): Promise<void> {
+    try {
+      const { costTracker } = await import('../../services/index.js');
+      const aggregated = await costTracker.getAggregatedCosts();
+      res.json(aggregated);
+    } catch (error) {
+      logger.error('Failed to get aggregated costs', { error });
+      res.status(500).json({
+        error: 'Failed to get aggregated costs',
         message: error instanceof Error ? error.message : 'Unknown error',
       });
     }

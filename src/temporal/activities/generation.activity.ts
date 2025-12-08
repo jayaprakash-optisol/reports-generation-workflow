@@ -37,7 +37,8 @@ export async function generateInsights(input: GenerateInsightsInput): Promise<Ge
     input.textContent,
     input.config.style,
     input.config.title,
-    input.config.customPromptInstructions
+    input.config.customPromptInstructions,
+    input.reportId
   );
 
   logger.info(`Generated ${narrative.sections.length} sections for report: ${input.reportId}`);

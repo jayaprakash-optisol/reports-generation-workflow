@@ -29,3 +29,9 @@ export {
   MinioStorageService,
   storage,
 } from './storage/index.js';
+
+// Cache Services
+export { cacheService, createCacheService, type ICacheService } from './cache/index.js';
+
+// Cost Tracking Services
+export { costTracker, CostTrackerService, type CostMetrics } from './cost/index.js';

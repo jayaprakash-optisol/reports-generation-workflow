@@ -45,6 +45,18 @@ const envSchema = z.object({
 
   // Logging
   LOG_LEVEL: z.enum(['error', 'warn', 'info', 'debug']).default('info'),
+
+  // Redis Configuration
+  REDIS_HOST: z.string().default('localhost'),
+  REDIS_PORT: z.string().default('6379'),
+  REDIS_PASSWORD: z.string().optional(),
+  REDIS_TTL_SECONDS: z.string().default('3600'), // 1 hour default
+
+  // Cost Tracking
+  ENABLE_COST_TRACKING: z.string().default('true'),
+  OPENAI_COST_PER_1K_TOKENS_INPUT: z.string().default('0.005'), // gpt-4o pricing
+  OPENAI_COST_PER_1K_TOKENS_OUTPUT: z.string().default('0.015'),
+  OPENAI_IMAGE_COST_PER_IMAGE: z.string().default('0.040'), // dall-e-3 pricing
 });
 
 const parsed = envSchema.safeParse(process.env);
@@ -102,6 +114,20 @@ export const config = {
   },
   logging: {
     level: env.LOG_LEVEL,
+  },
+  redis: {
+    host: env.REDIS_HOST,
+    port: Number.parseInt(env.REDIS_PORT, 10),
+    password: env.REDIS_PASSWORD,
+    ttl: Number.parseInt(env.REDIS_TTL_SECONDS, 10),
+  },
+  costTracking: {
+    enabled: env.ENABLE_COST_TRACKING === 'true',
+    openai: {
+      inputCostPer1K: Number.parseFloat(env.OPENAI_COST_PER_1K_TOKENS_INPUT),
+      outputCostPer1K: Number.parseFloat(env.OPENAI_COST_PER_1K_TOKENS_OUTPUT),
+      imageCostPerImage: Number.parseFloat(env.OPENAI_IMAGE_COST_PER_IMAGE),
+    },
   },
 } as const;
 

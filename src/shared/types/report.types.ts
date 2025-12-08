@@ -3,13 +3,13 @@ import { z } from 'zod';
 import type { ChartSuggestion } from './chart.types.js';
 import {
   BrandingSchema,
-  type Branding,
-  type ColumnProfile,
   ColumnTypeSchema,
   OutputFormatSchema,
+  ReportStyleSchema,
+  type Branding,
+  type ColumnProfile,
   type OutputFormat,
   type ReportStatus,
-  ReportStyleSchema,
   type ReportStyle,
   type TableData,
 } from './common.types.js';
@@ -93,6 +93,12 @@ export const CreateReportRequestSchema = z.object({
   config: ReportConfigSchema,
 });
 export type CreateReportRequest = z.infer<typeof CreateReportRequestSchema>;
+
+// Batch request schema
+export const BatchReportRequestSchema = z.object({
+  requests: z.array(CreateReportRequestSchema).min(1).max(50),
+});
+export type BatchReportRequest = z.infer<typeof BatchReportRequestSchema>;
 
 export interface ReportMetadata {
   id: string;

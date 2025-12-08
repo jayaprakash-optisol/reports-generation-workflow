@@ -2,8 +2,10 @@ import type { NextFunction, Request, Response } from 'express';
 import { Router } from 'express';
 import { body, param, query, validationResult } from 'express-validator';
 import multer from 'multer';
+import type { z } from 'zod';
 
 import { config } from '../../core/index.js';
+import { BatchReportRequestSchema, CreateReportRequestSchema } from '../../shared/types/index.js';
 
 import { reportController } from './report.controller.js';
 
@@ -45,22 +47,33 @@ const validate = (req: Request, res: Response, next: NextFunction) => {
   next();
 };
 
+// Zod validation middleware
+const validateZod = <T extends z.ZodTypeAny>(schema: T) => {
+  return (req: Request, res: Response, next: NextFunction) => {
+    const result = schema.safeParse(req.body);
+    if (!result.success) {
+      return res.status(400).json({
+        error: 'Validation failed',
+        details: result.error.flatten(),
+      });
+    }
+    req.body = result.data;
+    next();
+  };
+};
+
 // ============================================================================
 // POST /reports - Create a new report
 // ============================================================================
-router.post(
-  '/',
-  [
-    body('data').isArray({ min: 1 }).withMessage('Data array is required'),
-    body('config.title').isString().trim().isLength({ min: 1, max: 200 }),
-    body('config.style').optional().isIn(['business', 'research', 'technical']),
-    body('config.outputFormats')
-      .optional()
-      .isArray()
-      .custom((value: string[]) => value.every(v => ['PDF', 'DOCX', 'HTML'].includes(v))),
-  ],
-  validate,
-  (req: Request, res: Response) => reportController.create(req, res)
+router.post('/', validateZod(CreateReportRequestSchema), (req: Request, res: Response) =>
+  reportController.create(req, res)
+);
+
+// ============================================================================
+// POST /reports/batch - Create multiple reports in batch
+// ============================================================================
+router.post('/batch', validateZod(BatchReportRequestSchema), (req: Request, res: Response) =>
+  reportController.createBatch(req, res)
 );
 
 // ============================================================================
@@ -124,6 +137,23 @@ router.get(
   [param('reportId').isString().trim().isLength({ min: 1 })],
   validate,
   (req: Request, res: Response) => reportController.waitForCompletion(req, res)
+);
+
+// ============================================================================
+// GET /reports/:reportId/costs - Get cost metrics for a report
+// ============================================================================
+router.get(
+  '/:reportId/costs',
+  [param('reportId').isString().trim().isLength({ min: 1 })],
+  validate,
+  (req: Request, res: Response) => reportController.getCosts(req, res)
+);
+
+// ============================================================================
+// GET /reports/costs/aggregated - Get aggregated costs across all reports
+// ============================================================================
+router.get('/costs/aggregated', (req: Request, res: Response) =>
+  reportController.getAggregatedCosts(req, res)
 );
 
 export default router;
