@@ -423,6 +423,21 @@ apt-get install chromium-browser
 
 The following features are planned for the next version:
 
+### Multimodal Support
+
+- **LLM Flexibility**: Add support for all major LLM providers (OpenAI, Anthropic, Google, Azure OpenAI, and local models like Llama, Mistral, etc.)
+- **LLM Selection**: Allow per-report or per-feature selection of the LLM to use
+- **Multimodal Capabilities**: Enable generating reports from images, PDFs, and audio/video files
+- **Image Analysis & Charts**: Leverage vision models to automatically extract charts, tables, or key data from scanned documents or screenshots
+- **OCR Support**: Extract text from photos or scanned docs
+- **Inline Images in Reports**: Support for inserting and captioning images using vision-language models
+
+> **Example Use Cases**:
+>
+> - Upload a PDF or image and generate a report with auto-extracted insights
+> - Summarize charts shown in a screenshot
+> - Handle multilingual audio transcription and summary
+
 ### Access Control & Role-Based Permissions
 
 - **Role-Based Access Control (RBAC)**: Implement user roles (Admin, Editor, Viewer) with granular permissions
