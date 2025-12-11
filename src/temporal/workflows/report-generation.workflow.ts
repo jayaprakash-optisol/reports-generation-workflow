@@ -9,19 +9,60 @@ import {
 import type { InputData, Report, ReportConfig, ReportStatus } from '../../shared/types/index.js';
 import type * as activities from '../activities/index.js';
 
-// Proxy activities with retry policies
-const {
-  profileData,
-  generateInsights,
-  generateCharts,
-  renderLayout,
-  exportFormats,
-  finalizeReport,
-  updateReportStatus,
-} = proxyActivities<typeof activities>({
-  startToCloseTimeout: '10 minutes',
+// Proxy activities with tailored retry/timeout policies per activity type
+const { profileData } = proxyActivities<typeof activities>({
+  startToCloseTimeout: '2 minutes',
+  heartbeatTimeout: '30 seconds',
   retry: {
     initialInterval: '1 second',
+    backoffCoefficient: 2,
+    maximumAttempts: 3,
+    maximumInterval: '15 seconds',
+    nonRetryableErrorTypes: ['ValidationError', 'InvalidInputError'],
+  },
+});
+
+const { generateInsights } = proxyActivities<typeof activities>({
+  startToCloseTimeout: '3 minutes',
+  heartbeatTimeout: '30 seconds',
+  retry: {
+    initialInterval: '2 seconds',
+    backoffCoefficient: 2,
+    maximumAttempts: 2,
+    maximumInterval: '20 seconds',
+    nonRetryableErrorTypes: ['ValidationError', 'InvalidInputError'],
+  },
+});
+
+const { generateCharts } = proxyActivities<typeof activities>({
+  startToCloseTimeout: '3 minutes',
+  heartbeatTimeout: '30 seconds',
+  retry: {
+    initialInterval: '1 second',
+    backoffCoefficient: 2,
+    maximumAttempts: 3,
+    maximumInterval: '20 seconds',
+    nonRetryableErrorTypes: ['ValidationError', 'InvalidInputError'],
+  },
+});
+
+const { renderLayout } = proxyActivities<typeof activities>({
+  startToCloseTimeout: '2 minutes',
+  heartbeatTimeout: '30 seconds',
+  retry: {
+    initialInterval: '1 second',
+    backoffCoefficient: 2,
+    maximumAttempts: 3,
+    maximumInterval: '20 seconds',
+    nonRetryableErrorTypes: ['ValidationError', 'InvalidInputError'],
+  },
+});
+
+const { exportFormats, finalizeReport, updateReportStatus } = proxyActivities<typeof activities>({
+  startToCloseTimeout: '5 minutes',
+  heartbeatTimeout: '60 seconds',
+  retry: {
+    initialInterval: '2 seconds',
     backoffCoefficient: 2,
     maximumAttempts: 3,
     maximumInterval: '30 seconds',

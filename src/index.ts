@@ -81,6 +81,7 @@ async function main() {
   // Start server
   const server = app.listen(config.server.port, () => {
     logger.info(`🚀 Server running on http://localhost:${config.server.port}`);
+    logger.info(`📚 Swagger UI available at http://localhost:${config.server.port}/api/docs`);
     logger.info(`📊 Environment: ${config.server.nodeEnv}`);
     logger.info(`📁 Storage path: ${config.storage.basePath}`);
     logger.info(`💾 Storage type: ${config.storage.type}`);

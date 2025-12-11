@@ -1,3 +1,5 @@
+import { Context } from '@temporalio/activity';
+
 import { createModuleLogger } from '../../core/index.js';
 import { dataProfiler, storage } from '../../services/index.js';
 import type { DataProfile, InputData } from '../../shared/types/index.js';
@@ -22,15 +24,27 @@ export interface ProfileDataOutput {
 export async function profileData(input: ProfileDataInput): Promise<ProfileDataOutput> {
   logger.info(`Profiling data for report: ${input.reportId}`);
 
-  const { profile, parsedData, textContent } = await dataProfiler.profileData(input.inputData);
+  const activityCtx = Context.current();
+  const heartbeat = setInterval(
+    () => activityCtx.heartbeat({ step: 'profiling', reportId: input.reportId }),
+    5000
+  );
 
-  // Store intermediate result
-  await storage.saveReport(input.reportId, {
-    status: 'DATA_PROFILING',
-    dataProfile: profile,
-  });
+  try {
+    const { profile, parsedData, textContent } = await dataProfiler.profileData(input.inputData);
 
-  logger.info(`Data profiling complete: ${profile.rowCount} rows, ${profile.columnCount} columns`);
+    // Store intermediate result
+    await storage.saveReport(input.reportId, {
+      status: 'DATA_PROFILING',
+      dataProfile: profile,
+    });
 
-  return { profile, parsedData, textContent };
+    logger.info(
+      `Data profiling complete: ${profile.rowCount} rows, ${profile.columnCount} columns`
+    );
+
+    return { profile, parsedData, textContent };
+  } finally {
+    clearInterval(heartbeat);
+  }
 }

@@ -1,3 +1,5 @@
+import { Context } from '@temporalio/activity';
+
 import { createModuleLogger } from '../../core/index.js';
 import { chartGenerator, htmlGenerator, openaiService, storage } from '../../services/index.js';
 import type {
@@ -28,22 +30,32 @@ export interface GenerateInsightsInput {
 export async function generateInsights(input: GenerateInsightsInput): Promise<GeneratedNarrative> {
   logger.info(`Generating insights for report: ${input.reportId}`);
 
+  const activityCtx = Context.current();
+  const heartbeat = setInterval(
+    () => activityCtx.heartbeat({ step: 'generateInsights', reportId: input.reportId }),
+    5000
+  );
+
   // Update status
   await storage.saveReport(input.reportId, { status: 'INSIGHT_GENERATION' });
 
-  const narrative = await openaiService.generateNarrative(
-    input.profile,
-    input.parsedData,
-    input.textContent,
-    input.config.style,
-    input.config.title,
-    input.config.customPromptInstructions,
-    input.reportId
-  );
+  try {
+    const narrative = await openaiService.generateNarrative(
+      input.profile,
+      input.parsedData,
+      input.textContent,
+      input.config.style,
+      input.config.title,
+      input.config.customPromptInstructions,
+      input.reportId
+    );
 
-  logger.info(`Generated ${narrative.sections.length} sections for report: ${input.reportId}`);
+    logger.info(`Generated ${narrative.sections.length} sections for report: ${input.reportId}`);
 
-  return narrative;
+    return narrative;
+  } finally {
+    clearInterval(heartbeat);
+  }
 }
 
 // ============================================================================
@@ -59,19 +71,29 @@ export interface GenerateChartsInput {
 export async function generateCharts(input: GenerateChartsInput): Promise<GeneratedChart[]> {
   logger.info(`Generating charts for report: ${input.reportId}`);
 
+  const activityCtx = Context.current();
+  const heartbeat = setInterval(
+    () => activityCtx.heartbeat({ step: 'generateCharts', reportId: input.reportId }),
+    5000
+  );
+
   // Update status
   await storage.saveReport(input.reportId, { status: 'CHART_GENERATION' });
 
-  const charts = await chartGenerator.generateCharts(
-    input.profile.suggestedCharts,
-    input.parsedData,
-    input.reportId,
-    input.profile
-  );
+  try {
+    const charts = await chartGenerator.generateCharts(
+      input.profile.suggestedCharts,
+      input.parsedData,
+      input.reportId,
+      input.profile
+    );
 
-  logger.info(`Generated ${charts.length} charts for report: ${input.reportId}`);
+    logger.info(`Generated ${charts.length} charts for report: ${input.reportId}`);
 
-  return charts;
+    return charts;
+  } finally {
+    clearInterval(heartbeat);
+  }
 }
 
 // ============================================================================
