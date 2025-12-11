@@ -104,7 +104,7 @@ async function exportSingleFormat(
 
       return {
         format: 'HTML',
-        url: `/api/reports/${input.reportId}/files?format=HTML`,
+        url: `/reports/${input.reportId}/files?format=HTML`,
         size: htmlSize,
         generatedAt: new Date().toISOString(),
       };
@@ -120,7 +120,7 @@ async function exportSingleFormat(
 
       return {
         format: 'PDF',
-        url: `/api/reports/${input.reportId}/files?format=PDF`,
+        url: `/reports/${input.reportId}/files?format=PDF`,
         size: pdfSize,
         generatedAt: new Date().toISOString(),
       };
@@ -153,7 +153,7 @@ async function exportSingleFormat(
 
       return {
         format: 'DOCX',
-        url: `/api/reports/${input.reportId}/files?format=DOCX`,
+        url: `/reports/${input.reportId}/files?format=DOCX`,
         size: docxSize,
         generatedAt: new Date().toISOString(),
       };

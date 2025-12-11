@@ -40,19 +40,19 @@ export async function generateInsights(input: GenerateInsightsInput): Promise<Ge
   await storage.saveReport(input.reportId, { status: 'INSIGHT_GENERATION' });
 
   try {
-    const narrative = await openaiService.generateNarrative(
-      input.profile,
-      input.parsedData,
-      input.textContent,
-      input.config.style,
-      input.config.title,
-      input.config.customPromptInstructions,
-      input.reportId
-    );
+  const narrative = await openaiService.generateNarrative(
+    input.profile,
+    input.parsedData,
+    input.textContent,
+    input.config.style,
+    input.config.title,
+    input.config.customPromptInstructions,
+    input.reportId
+  );
 
-    logger.info(`Generated ${narrative.sections.length} sections for report: ${input.reportId}`);
+  logger.info(`Generated ${narrative.sections.length} sections for report: ${input.reportId}`);
 
-    return narrative;
+  return narrative;
   } finally {
     clearInterval(heartbeat);
   }
@@ -81,16 +81,16 @@ export async function generateCharts(input: GenerateChartsInput): Promise<Genera
   await storage.saveReport(input.reportId, { status: 'CHART_GENERATION' });
 
   try {
-    const charts = await chartGenerator.generateCharts(
-      input.profile.suggestedCharts,
-      input.parsedData,
-      input.reportId,
-      input.profile
-    );
+  const charts = await chartGenerator.generateCharts(
+    input.profile.suggestedCharts,
+    input.parsedData,
+    input.reportId,
+    input.profile
+  );
 
-    logger.info(`Generated ${charts.length} charts for report: ${input.reportId}`);
+  logger.info(`Generated ${charts.length} charts for report: ${input.reportId}`);
 
-    return charts;
+  return charts;
   } finally {
     clearInterval(heartbeat);
   }

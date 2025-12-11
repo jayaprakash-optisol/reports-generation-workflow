@@ -1,25 +1,22 @@
-import * as React from 'react';
+import { HTMLAttributes } from 'react';
 
-import { cn } from '@/lib/utils';
+import { cn } from '../../lib/utils';
 
-export interface ProgressProps extends React.HTMLAttributes<HTMLDivElement> {
-  value?: number;
+interface ProgressProps extends HTMLAttributes<HTMLDivElement> {
+  value: number;
 }
 
-const Progress = React.forwardRef<HTMLDivElement, ProgressProps>(
-  ({ className, value = 0, ...props }, ref) => (
+export function Progress({ value, className, ...props }: ProgressProps) {
+  const clamped = Math.min(100, Math.max(0, value ?? 0));
+  return (
     <div
-      ref={ref}
-      className={cn('relative h-3 w-full overflow-hidden rounded-full bg-secondary', className)}
+      className={cn('relative h-2 w-full overflow-hidden rounded-full bg-slate-800', className)}
       {...props}
     >
       <div
-        className="h-full w-full flex-1 bg-primary transition-all"
-        style={{ transform: `translateX(-${100 - Math.min(100, Math.max(0, value))}%)` }}
+        className="h-full rounded-full bg-gradient-to-r from-indigo-500 via-purple-500 to-indigo-400 transition-all"
+        style={{ width: `${clamped}%` }}
       />
     </div>
-  )
-);
-Progress.displayName = 'Progress';
-
-export { Progress };
+  );
+}

@@ -1,18 +1,7 @@
-const { fontFamily } = require('tailwindcss/defaultTheme');
-const animatePlugin = require('tailwindcss-animate');
-
 /** @type {import('tailwindcss').Config} */
-module.exports = {
-  darkMode: ['class'],
+export default {
   content: ['./index.html', './src/**/*.{ts,tsx,js,jsx}'],
   theme: {
-    container: {
-      center: true,
-      padding: '2rem',
-      screens: {
-        '2xl': '1200px',
-      },
-    },
     extend: {
       colors: {
         border: 'hsl(var(--border))',
@@ -27,10 +16,6 @@ module.exports = {
         secondary: {
           DEFAULT: 'hsl(var(--secondary))',
           foreground: 'hsl(var(--secondary-foreground))',
-        },
-        destructive: {
-          DEFAULT: 'hsl(var(--destructive))',
-          foreground: 'hsl(var(--destructive-foreground))',
         },
         muted: {
           DEFAULT: 'hsl(var(--muted))',
@@ -54,24 +39,10 @@ module.exports = {
         md: 'calc(var(--radius) - 2px)',
         sm: 'calc(var(--radius) - 4px)',
       },
-      fontFamily: {
-        sans: ['Inter', ...fontFamily.sans],
-      },
-      keyframes: {
-        'accordion-down': {
-          from: { height: '0' },
-          to: { height: 'var(--radix-accordion-content-height)' },
-        },
-        'accordion-up': {
-          from: { height: 'var(--radix-accordion-content-height)' },
-          to: { height: '0' },
-        },
-      },
-      animation: {
-        'accordion-down': 'accordion-down 0.2s ease-out',
-        'accordion-up': 'accordion-up 0.2s ease-out',
+      boxShadow: {
+        glow: '0 20px 60px rgba(99, 102, 241, 0.15)',
       },
     },
   },
-  plugins: [animatePlugin],
+  plugins: [],
 };

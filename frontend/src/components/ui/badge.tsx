@@ -1,32 +1,27 @@
-import { cva, type VariantProps } from 'class-variance-authority';
-import * as React from 'react';
+import { HTMLAttributes } from 'react';
 
-import { cn } from '@/lib/utils';
+import { cn } from '../../lib/utils';
 
-const badgeVariants = cva(
-  'inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2',
-  {
-    variants: {
-      variant: {
-        default: 'border-transparent bg-primary text-primary-foreground hover:bg-primary/80',
-        secondary:
-          'border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80',
-        destructive:
-          'border-transparent bg-destructive text-destructive-foreground hover:bg-destructive/80',
-        outline: 'text-foreground',
-      },
-    },
-    defaultVariants: {
-      variant: 'default',
-    },
-  }
-);
-
-export interface BadgeProps
-  extends React.HTMLAttributes<HTMLDivElement>, VariantProps<typeof badgeVariants> {}
-
-function Badge({ className, variant, ...props }: BadgeProps) {
-  return <div className={cn(badgeVariants({ variant }), className)} {...props} />;
+interface BadgeProps extends HTMLAttributes<HTMLSpanElement> {
+  variant?: 'primary' | 'secondary' | 'outline' | 'success';
 }
 
-export { Badge, badgeVariants };
+export function Badge({ className, variant = 'primary', ...props }: BadgeProps) {
+  const variants: Record<NonNullable<BadgeProps['variant']>, string> = {
+    primary: 'bg-indigo-500/20 text-indigo-200 border border-indigo-400/30',
+    secondary: 'bg-slate-800 text-slate-200 border border-slate-700',
+    outline: 'border border-slate-700 text-slate-200',
+    success: 'bg-emerald-500/15 text-emerald-200 border border-emerald-400/30',
+  };
+
+  return (
+    <span
+      className={cn(
+        'inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold',
+        variants[variant],
+        className
+      )}
+      {...props}
+    />
+  );
+}
