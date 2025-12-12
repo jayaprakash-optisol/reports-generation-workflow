@@ -39,6 +39,7 @@ const Index = () => {
               variant="outline"
               size="sm"
               className="border-border/50 hover:bg-muted/50 shrink-0 self-start"
+              onClick={() => window.open('http://localhost:3000/api/docs', '_blank')}
             >
               <ExternalLink className="w-4 h-4 mr-2" />
               API docs: /api/docs

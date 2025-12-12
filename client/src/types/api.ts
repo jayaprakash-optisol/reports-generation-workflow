@@ -33,7 +33,15 @@ export interface ReportRequest {
 export interface ReportResponse {
   reportId: string;
   workflowId: string;
-  status: 'QUEUED' | 'DATA_PROFILING' | 'INSIGHT_GENERATION' | 'CHART_GENERATION' | 'LAYOUT_RENDERING' | 'EXPORTING' | 'COMPLETED' | 'FAILED';
+  status:
+    | 'QUEUED'
+    | 'DATA_PROFILING'
+    | 'INSIGHT_GENERATION'
+    | 'CHART_GENERATION'
+    | 'LAYOUT_RENDERING'
+    | 'EXPORTING'
+    | 'COMPLETED'
+    | 'FAILED';
   statusUrl: string;
 }
 
@@ -47,7 +55,15 @@ export interface ReportStatus {
   id: string;
   title: string;
   style: 'business' | 'research' | 'technical';
-  status: 'QUEUED' | 'DATA_PROFILING' | 'INSIGHT_GENERATION' | 'CHART_GENERATION' | 'LAYOUT_RENDERING' | 'EXPORTING' | 'COMPLETED' | 'FAILED';
+  status:
+    | 'QUEUED'
+    | 'DATA_PROFILING'
+    | 'INSIGHT_GENERATION'
+    | 'CHART_GENERATION'
+    | 'LAYOUT_RENDERING'
+    | 'EXPORTING'
+    | 'COMPLETED'
+    | 'FAILED';
   progress: number;
   workflowId: string;
   createdAt: string;
@@ -61,7 +77,16 @@ export interface ReportListItem {
   id: string;
   title: string;
   style: 'business' | 'research' | 'technical';
-  status: 'QUEUED' | 'DATA_PROFILING' | 'INSIGHT_GENERATION' | 'CHART_GENERATION' | 'LAYOUT_RENDERING' | 'EXPORTING' | 'COMPLETED' | 'FAILED';
+  status:
+    | 'QUEUED'
+    | 'DATA_PROFILING'
+    | 'INSIGHT_GENERATION'
+    | 'CHART_GENERATION'
+    | 'LAYOUT_RENDERING'
+    | 'EXPORTING'
+    | 'COMPLETED'
+    | 'FAILED';
+  progress?: number;
   createdAt: string;
   completedAt?: string;
 }

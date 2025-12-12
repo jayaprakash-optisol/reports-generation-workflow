@@ -29,7 +29,14 @@ export function RecentReports() {
   const queryClient = useQueryClient();
 
   const reports = data?.reports || [];
-  const completedReports = reports.filter(report => report.status === 'COMPLETED');
+  const completedReports = reports
+    .filter(report => report.status === 'COMPLETED')
+    .sort((a, b) => {
+      // Sort by most recent first (descending order by createdAt)
+      const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      return dateB - dateA;
+    });
   const totalPages = Math.ceil(completedReports.length / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
   const paginatedReports = completedReports.slice(startIndex, startIndex + ITEMS_PER_PAGE);

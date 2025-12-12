@@ -243,6 +243,27 @@ export class ReportController {
       const reports = await Promise.all(
         reportIds.map(async id => {
           const report = (await storage.getReport(id)) as Report | null;
+          if (!report) return null;
+
+          // For active workflows, query Temporal to get live status
+          if (report.status && !['COMPLETED', 'FAILED'].includes(report.status)) {
+            const workflowId = `report-${id}`;
+            try {
+              const workflowStatus = await getWorkflowStatus(workflowId);
+              if (workflowStatus) {
+                // Merge live status from Temporal with storage data
+                return {
+                  ...report,
+                  status: workflowStatus.status,
+                  progress: workflowStatus.progress,
+                };
+              }
+            } catch (error) {
+              // If workflow query fails, continue with storage data
+              logger.debug(`Could not query workflow status for ${workflowId}`, { error });
+            }
+          }
+
           return report;
         })
       );
@@ -331,13 +352,21 @@ export class ReportController {
       // Start all workflows
       const results = await Promise.allSettled(
         requests.map(async request => {
-          const { reportId, workflowId } = await startReportGeneration(request.data, request.config);
+          const { reportId, workflowId } = await startReportGeneration(
+            request.data,
+            request.config
+          );
           return { reportId, workflowId, title: request.config.title };
         })
       );
 
       const successful = results
-        .filter((r): r is PromiseFulfilledResult<{ reportId: string; workflowId: string; title: string }> => r.status === 'fulfilled')
+        .filter(
+          (
+            r
+          ): r is PromiseFulfilledResult<{ reportId: string; workflowId: string; title: string }> =>
+            r.status === 'fulfilled'
+        )
         .map(r => r.value);
 
       const failed = results
