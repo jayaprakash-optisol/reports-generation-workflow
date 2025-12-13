@@ -196,7 +196,7 @@ export function ReportForm() {
               ref={fileInputRef}
               type="file"
               multiple
-              accept=".csv,.json,.txt,.md,.xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
+              accept=".csv,.json,.txt,.md,.xlsx,.xls,.pdf,.doc,.docx,.ppt,.pptx,.html,.rtf,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation,text/html,application/rtf"
               onChange={handleFileChange}
               className="hidden"
             />
@@ -214,7 +214,7 @@ export function ReportForm() {
               </p>
             )}
             <p className="text-xs text-muted-foreground mt-2 text-center">
-              CSV, JSON, Excel (.xlsx, .xls), text, or markdown
+              CSV, JSON, Excel (.xlsx, .xls), PDF, DOC, DOCX, PPT, PPTX, Markdown, HTML, RTF, or text
             </p>
           </div>
         </div>

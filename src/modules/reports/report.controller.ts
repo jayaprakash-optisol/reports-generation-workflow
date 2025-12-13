@@ -73,11 +73,23 @@ export class ReportController {
       const chunkSizeBytes = config.docling.chunkSizeMB * 1024 * 1024;
       const useDocling = await doclingService.isAvailable();
 
-      // Process files - use docling for large files
+      // Process files - use docling for large files or document formats
       const inputDataPromises = files.map(async (file, index) => {
         const fileSize = file.buffer.length;
         const fileId = `${nanoid(12)}-${index}`;
-        const shouldUseDocling = useDocling && fileSize > chunkSizeBytes;
+
+        // Check if file is a document format that needs docling processing
+        const isDocumentFormat =
+          file.mimetype === 'application/pdf' ||
+          file.mimetype === 'application/msword' ||
+          file.mimetype ===
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
+          file.mimetype === 'application/vnd.ms-powerpoint' ||
+          file.mimetype ===
+            'application/vnd.openxmlformats-officedocument.presentationml.presentation' ||
+          file.mimetype === 'application/rtf';
+
+        const shouldUseDocling = useDocling && (fileSize > chunkSizeBytes || isDocumentFormat);
 
         // Initialize processing status for tracking
         if (shouldUseDocling) {
@@ -86,7 +98,7 @@ export class ReportController {
 
         if (shouldUseDocling) {
           logger.info(
-            `Processing large file with docling: ${file.originalname} (${fileSize} bytes)`
+            `Processing file with docling: ${file.originalname} (${fileSize} bytes, format: ${file.mimetype})`
           );
 
           // Process file through docling
