@@ -196,7 +196,7 @@ export function ReportForm() {
               ref={fileInputRef}
               type="file"
               multiple
-              accept=".csv,.json,.txt,.md"
+              accept=".csv,.json,.txt,.md,.xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
               onChange={handleFileChange}
               className="hidden"
             />
@@ -214,7 +214,7 @@ export function ReportForm() {
               </p>
             )}
             <p className="text-xs text-muted-foreground mt-2 text-center">
-              CSV, JSON, text, or markdown
+              CSV, JSON, Excel (.xlsx, .xls), text, or markdown
             </p>
           </div>
         </div>
