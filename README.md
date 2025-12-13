@@ -10,6 +10,8 @@ An intelligent report generation system that transforms structured and unstructu
 - **Multiple Output Formats**: Export to PDF, DOCX, or HTML
 - **Reliable Workflow Orchestration**: Temporal-based workflows with retries, status tracking, and fault tolerance
 - **Data Profiling**: Automatic detection of data types, statistical summaries, and quality scoring
+- **Large File Processing**: Automatic chunking and processing of large files (>10MB) using Docling for document extraction
+- **Multi-Format Support**: Supports CSV, JSON, Excel, PDF, DOCX, PPT, and more with intelligent format detection
 
 ## Architecture
 
@@ -54,13 +56,22 @@ Edit `.env` and add your OpenAI API key:
 OPENAI_API_KEY=sk-your-api-key-here
 ```
 
-### 3. Start Temporal Server
+### 3. Start Services with Docker Compose
 
 ```bash
 docker-compose up -d
 ```
 
-Wait for Temporal to be healthy (check at http://localhost:8080).
+This starts:
+
+- **Temporal Server** (http://localhost:7233) - Workflow orchestration
+- **Temporal UI** (http://localhost:8080) - Workflow monitoring
+- **PostgreSQL** (localhost:5432) - Temporal persistence
+- **MinIO** (http://localhost:9000) - Object storage
+- **Redis** (localhost:6379) - Caching
+- **Docling** (http://localhost:5001) - Large file processing
+
+Wait for services to be healthy. Check Temporal UI at http://localhost:8080.
 
 ### 4. Start the Worker
 
@@ -145,15 +156,69 @@ curl -X POST http://localhost:3000/api/reports \
 
 **POST** `/api/reports/upload`
 
-Create a report from file uploads (CSV, JSON, text, markdown).
+Create a report from file uploads. Supports multiple file formats including CSV, JSON, Excel, PDF, DOCX, PPT, and more.
+
+**Supported File Formats:**
+
+- **Structured Data**: CSV, JSON, Excel (.xlsx, .xls)
+- **Documents**: PDF, DOCX, DOC, PPT, PPTX
+- **Text Formats**: TXT, Markdown, HTML, RTF
+
+**Large File Processing:**
+Files larger than 10MB (configurable) are automatically processed through Docling for intelligent chunking and extraction. Processing status can be tracked via the file processing status endpoint.
 
 ```bash
 curl -X POST http://localhost:3000/api/reports/upload \
   -F "files=@data.csv" \
+  -F "files=@report.pdf" \
   -F "title=Sales Analysis Report" \
   -F "style=business" \
   -F "outputFormats=PDF,HTML"
 ```
+
+**Response:**
+
+```json
+{
+  "reportId": "abc123xyz",
+  "workflowId": "report-abc123xyz",
+  "status": "QUEUED",
+  "statusUrl": "/reports/abc123xyz",
+  "filesProcessed": 2,
+  "message": "Report generation started"
+}
+```
+
+### Get File Processing Status
+
+**GET** `/api/reports/files/:fileId/status`
+
+Get the processing status of a file being processed by Docling.
+
+```bash
+curl http://localhost:3000/api/reports/files/abc123-0/status
+```
+
+**Response:**
+
+```json
+{
+  "fileId": "abc123-0",
+  "filename": "large-document.pdf",
+  "status": "processing",
+  "progress": 60,
+  "chunksProcessed": 3,
+  "totalChunks": 5,
+  "startedAt": "2024-01-15T10:30:00.000Z"
+}
+```
+
+**Status Values:**
+
+- `pending`: File queued for processing
+- `processing`: Currently being processed by Docling
+- `completed`: Processing finished successfully
+- `failed`: Processing failed (check error field)
 
 ### Get Report Status
 
@@ -251,6 +316,17 @@ curl -X POST http://localhost:3000/api/reports/abc123xyz/cancel
 }
 ```
 
+### Structured Data (Excel)
+
+```json
+{
+  "type": "structured",
+  "format": "xlsx",
+  "data": "<base64-encoded-excel-file>",
+  "sheetName": "Sheet1"
+}
+```
+
 ### Unstructured Data
 
 ```json
@@ -260,6 +336,40 @@ curl -X POST http://localhost:3000/api/reports/abc123xyz/cancel
   "content": "Additional context and notes about the data..."
 }
 ```
+
+## Large File Processing with Docling
+
+The system automatically uses [Docling](https://github.com/DS4SD/docling) for processing large files (>10MB by default). Docling provides intelligent document parsing, chunking, and content extraction for various document formats.
+
+### How It Works
+
+1. **File Size Check**: When files are uploaded, the system checks their size against the configured threshold (`DOCLING_CHUNK_SIZE_MB`, default: 10MB)
+2. **Automatic Routing**: Files larger than the threshold are automatically sent to Docling for processing
+3. **Intelligent Chunking**: Docling extracts and chunks content intelligently, preserving document structure
+4. **Status Tracking**: Real-time processing status is available via the file processing status endpoint
+5. **Fallback**: If Docling processing fails, the system automatically falls back to direct file processing
+
+### Configuration
+
+Configure Docling in your `.env` file:
+
+```env
+# Docling Configuration
+DOCLING_ENABLED=true                    # Enable/disable Docling
+DOCLING_URL=http://localhost:5001      # Docling service URL
+DOCLING_CHUNK_SIZE_MB=10                # Threshold for using Docling (in MB)
+DOCLING_TIMEOUT_MS=300000               # Processing timeout (5 minutes)
+```
+
+### Starting Docling Service
+
+Docling is included in the Docker Compose setup:
+
+```bash
+docker-compose up -d docling
+```
+
+The Docling service will be available at `http://localhost:5001` with a web UI for testing and monitoring.
 
 ## Configuration Options
 
@@ -304,30 +414,32 @@ curl -X POST http://localhost:3000/api/reports/abc123xyz/cancel
 
 ```
 src/
-├── api/
-│   └── routes.ts           # Express API routes
-├── config/
-│   └── index.ts            # Configuration management
+├── core/
+│   ├── config/            # Configuration management
+│   ├── interfaces/        # Service interfaces
+│   ├── logger/            # Logging utilities
+│   └── utils/             # Core utilities
+├── modules/
+│   ├── health/            # Health check endpoints
+│   ├── reports/           # Report API routes & controllers
+│   └── swagger/           # API documentation
 ├── services/
-│   ├── data-profiler.ts    # Data analysis and profiling
-│   ├── openai-service.ts   # OpenAI integration
-│   ├── chart-generator.ts  # Chart creation
-│   ├── pdf-generator.ts    # PDF export
-│   └── docx-generator.ts   # DOCX export
-├── templates/
-│   ├── styles.ts           # Report style configurations
-│   └── html-generator.ts   # HTML report generation
+│   ├── ai/                # OpenAI integration
+│   ├── cache/             # Redis caching
+│   ├── cost/              # Cost tracking
+│   ├── data/              # Data profiling
+│   ├── docling/           # Large file processing
+│   ├── generators/        # Report generators (PDF, DOCX, HTML)
+│   └── storage/           # File storage (Local/MinIO)
+├── shared/
+│   ├── types/             # TypeScript types
+│   └── utils/             # Shared utilities
 ├── temporal/
-│   ├── activities.ts       # Temporal activities
-│   ├── workflows.ts        # Temporal workflows
-│   ├── worker.ts           # Temporal worker
-│   └── client.ts           # Temporal client
-├── types/
-│   └── index.ts            # TypeScript types
-├── utils/
-│   ├── logger.ts           # Logging utility
-│   └── storage.ts          # File storage
-└── index.ts                # Application entry point
+│   ├── activities/        # Temporal activities
+│   ├── workflows/         # Temporal workflows
+│   ├── worker.ts          # Temporal worker
+│   └── client.ts          # Temporal client
+└── index.ts               # Application entry point
 ```
 
 ### Scripts
@@ -355,16 +467,20 @@ Access the Temporal Web UI at http://localhost:8080 to:
 
 ### Environment Variables
 
-| Variable             | Description             | Default        |
-| -------------------- | ----------------------- | -------------- |
-| `PORT`               | API server port         | 3000           |
-| `NODE_ENV`           | Environment             | development    |
-| `OPENAI_API_KEY`     | OpenAI API key          | (required)     |
-| `OPENAI_MODEL`       | GPT model to use        | gpt-4o         |
-| `TEMPORAL_ADDRESS`   | Temporal server address | localhost:7233 |
-| `TEMPORAL_NAMESPACE` | Temporal namespace      | default        |
-| `STORAGE_PATH`       | Base storage directory  | ./storage      |
-| `LOG_LEVEL`          | Logging level           | info           |
+| Variable                | Description              | Default        |
+| ----------------------- | ------------------------ | -------------- |
+| `PORT`                  | API server port          | 3000           |
+| `NODE_ENV`              | Environment              | development    |
+| `OPENAI_API_KEY`        | OpenAI API key           | (required)     |
+| `OPENAI_MODEL`          | GPT model to use         | gpt-4o         |
+| `TEMPORAL_ADDRESS`      | Temporal server address  | localhost:7233 |
+| `TEMPORAL_NAMESPACE`    | Temporal namespace       | default        |
+| `STORAGE_PATH`          | Base storage directory   | ./storage      |
+| `LOG_LEVEL`             | Logging level            | info           |
+| `DOCLING_ENABLED`       | Enable Docling service   | true           |
+| `DOCLING_URL`           | Docling service URL      | localhost:5001 |
+| `DOCLING_CHUNK_SIZE_MB` | File size threshold (MB) | 10             |
+| `DOCLING_TIMEOUT_MS`    | Processing timeout (ms)  | 300000         |
 
 ### Docker Deployment
 
@@ -418,6 +534,32 @@ brew install chromium
 # Ubuntu/Debian
 apt-get install chromium-browser
 ```
+
+### Docling Service Issues
+
+If large file processing fails:
+
+1. **Check Docling is running:**
+
+   ```bash
+   docker-compose ps docling
+   curl http://localhost:5001/health
+   ```
+
+2. **Check Docling logs:**
+
+   ```bash
+   docker-compose logs docling
+   ```
+
+3. **Verify configuration:**
+   - Ensure `DOCLING_ENABLED=true` in `.env`
+   - Check `DOCLING_URL` matches the service URL
+   - Verify file size threshold (`DOCLING_CHUNK_SIZE_MB`)
+
+4. **Fallback behavior:**
+   - If Docling is unavailable, the system automatically falls back to direct file processing
+   - Small files (< 10MB) are always processed directly
 
 ## Upcoming Features
 

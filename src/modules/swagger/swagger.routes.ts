@@ -1,8 +1,9 @@
-import type { Request, Response } from 'express';
-import { Router } from 'express';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+
+import type { Request, Response } from 'express';
+import { Router } from 'express';
 import swaggerUi from 'swagger-ui-express';
 import { parse } from 'yaml';
 
