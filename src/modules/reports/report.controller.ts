@@ -2,7 +2,7 @@ import type { Request, Response } from 'express';
 import { nanoid } from 'nanoid';
 
 import { config, createModuleLogger } from '../../core/index.js';
-import { storage } from '../../services/index.js';
+import { doclingService, storage } from '../../services/index.js';
 import type { InputData, OutputFormat, Report, ReportConfig } from '../../shared/types/index.js';
 import { BatchReportRequestSchema, CreateReportRequestSchema } from '../../shared/types/index.js';
 import {
@@ -70,37 +70,58 @@ export class ReportController {
         return;
       }
 
-      // Convert uploaded files to InputData
-      const inputData: InputData[] = files.map(file => {
-        const isJson = file.mimetype === 'application/json';
-        const isCsv = file.mimetype === 'text/csv';
-        const isExcel =
-          file.mimetype === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' ||
-          file.mimetype === 'application/vnd.ms-excel';
+      const chunkSizeBytes = config.docling.chunkSizeMB * 1024 * 1024;
+      const useDocling = await doclingService.isAvailable();
 
-        if (isExcel) {
-          // Excel files are binary - encode as base64
-          return {
-            type: 'structured' as const,
-            format: 'xlsx' as const,
-            data: file.buffer.toString('base64'),
-          };
-        } else if (isJson || isCsv) {
-          const content = file.buffer.toString('utf-8');
-          return {
-            type: 'structured' as const,
-            format: isJson ? ('json' as const) : ('csv' as const),
-            data: content,
-          };
-        } else {
-          const content = file.buffer.toString('utf-8');
+      // Process files - use docling for large files
+      const inputDataPromises = files.map(async (file, index) => {
+        const fileSize = file.buffer.length;
+        const fileId = `${nanoid(12)}-${index}`;
+        const shouldUseDocling = useDocling && fileSize > chunkSizeBytes;
+
+        // Initialize processing status for tracking
+        if (shouldUseDocling) {
+          doclingService.initializeProcessingStatus(fileId, file.originalname);
+        }
+
+        if (shouldUseDocling) {
+          logger.info(
+            `Processing large file with docling: ${file.originalname} (${fileSize} bytes)`
+          );
+
+          // Process file through docling
+          const result = await doclingService.processFile(
+            file.buffer,
+            file.originalname,
+            file.mimetype,
+            fileId
+          );
+
+          if (!result.success || !result.chunks || result.chunks.length === 0) {
+            logger.warn(
+              `Docling processing failed for ${file.originalname}, falling back to direct processing`
+            );
+            // Fallback to direct processing
+            return this.convertFileToInputData(file);
+          }
+
+          // Convert docling chunks to InputData
+          // Combine all chunks into a single text content
+          const combinedContent = result.chunks.map(chunk => chunk.content).join('\n\n');
+
           return {
             type: 'unstructured' as const,
-            format: file.mimetype.includes('markdown') ? ('markdown' as const) : ('text' as const),
-            content,
+            format: 'text' as const,
+            content: combinedContent,
           };
+        } else {
+          // Process small files directly
+          return this.convertFileToInputData(file);
         }
       });
+
+      // Wait for all files to be processed
+      const inputData = await Promise.all(inputDataPromises);
 
       // Parse output formats
       let outputFormats: OutputFormat[] = ['PDF'];
@@ -140,6 +161,40 @@ export class ReportController {
         error: 'Failed to start report generation',
         message: error instanceof Error ? error.message : 'Unknown error',
       });
+    }
+  }
+
+  /**
+   * Convert a file to InputData format (for small files processed directly)
+   */
+  private convertFileToInputData(file: Express.Multer.File): InputData {
+    const isJson = file.mimetype === 'application/json';
+    const isCsv = file.mimetype === 'text/csv';
+    const isExcel =
+      file.mimetype === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' ||
+      file.mimetype === 'application/vnd.ms-excel';
+
+    if (isExcel) {
+      // Excel files are binary - encode as base64
+      return {
+        type: 'structured' as const,
+        format: 'xlsx' as const,
+        data: file.buffer.toString('base64'),
+      };
+    } else if (isJson || isCsv) {
+      const content = file.buffer.toString('utf-8');
+      return {
+        type: 'structured' as const,
+        format: isJson ? ('json' as const) : ('csv' as const),
+        data: content,
+      };
+    } else {
+      const content = file.buffer.toString('utf-8');
+      return {
+        type: 'unstructured' as const,
+        format: file.mimetype.includes('markdown') ? ('markdown' as const) : ('text' as const),
+        content,
+      };
     }
   }
 
@@ -431,6 +486,29 @@ export class ReportController {
       logger.error('Failed to get aggregated costs', { error });
       res.status(500).json({
         error: 'Failed to get aggregated costs',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      });
+    }
+  }
+
+  /**
+   * Get file processing status
+   */
+  async getFileProcessingStatus(req: Request, res: Response): Promise<void> {
+    try {
+      const { fileId } = req.params;
+      const status = doclingService.getProcessingStatus(fileId);
+
+      if (!status) {
+        res.status(404).json({ error: 'File processing status not found' });
+        return;
+      }
+
+      res.json(status);
+    } catch (error) {
+      logger.error('Failed to get file processing status', { error });
+      res.status(500).json({
+        error: 'Failed to get file processing status',
         message: error instanceof Error ? error.message : 'Unknown error',
       });
     }

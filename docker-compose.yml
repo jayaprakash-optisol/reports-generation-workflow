@@ -106,6 +106,35 @@ services:
       timeout: 3s
       retries: 5
 
+  # Docling Document Processing Service
+  docling:
+    # Use the CPU image, CUDA images (e.g., -cu128) are available for GPU setups
+    image: ghcr.io/docling-project/docling-serve-cpu:main
+    container_name: docling-serve
+    restart: unless-stopped
+    ports:
+      - '5001:5001' # Expose the API and UI on port 5001
+    environment:
+      # Enable the web-based user interface
+      DOCLING_SERVE_ENABLE_UI: 'true'
+      DOCLING_SERVE_HOST: '0.0.0.0'
+      DOCLING_SERVE_PORT: '5001'
+      # Define cache volumes to persist downloaded models across restarts
+      HF_HOME: '/models/hf'
+      HF_HUB_CACHE: '/models/hf/hub'
+      # For production, you might adjust worker numbers
+    volumes:
+      # Named volumes for Hugging Face and OCR model caches
+      - hf_cache:/models/hf
+      - ocr_cache:/root/.EasyOCR
+    # Optional healthcheck to ensure the service is ready
+    healthcheck:
+      test: ['CMD-SHELL', 'curl --fail http://localhost:5001/health || exit 1']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
   # Report Generator API (optional - for containerized deployment)
   # Uncomment to run the API in Docker
   # api:
@@ -130,3 +159,5 @@ volumes:
   postgres_data:
   minio_data:
   redis_data:
+  hf_cache:
+  ocr_cache:

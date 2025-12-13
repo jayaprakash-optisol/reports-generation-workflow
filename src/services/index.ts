@@ -35,3 +35,11 @@ export { cacheService, createCacheService } from './cache/index.js';
 
 // Cost Tracking Services
 export { costTracker, CostTrackerService } from './cost/index.js';
+
+// Docling Services
+export { doclingService, DoclingService } from './docling/index.js';
+export type {
+  DoclingChunk,
+  DoclingProcessResult,
+  FileProcessingStatus,
+} from './docling/index.js';

@@ -57,6 +57,12 @@ const envSchema = z.object({
   OPENAI_COST_PER_1K_TOKENS_INPUT: z.string().default('0.005'), // gpt-4o pricing
   OPENAI_COST_PER_1K_TOKENS_OUTPUT: z.string().default('0.015'),
   OPENAI_IMAGE_COST_PER_IMAGE: z.string().default('0.040'), // dall-e-3 pricing
+
+  // Docling Configuration
+  DOCLING_ENABLED: z.string().default('true'),
+  DOCLING_URL: z.string().default('http://localhost:5001'),
+  DOCLING_CHUNK_SIZE_MB: z.string().default('10'), // Files larger than this will use docling
+  DOCLING_TIMEOUT_MS: z.string().default('300000'), // 5 minutes
 });
 
 const parsed = envSchema.safeParse(process.env);
@@ -128,6 +134,12 @@ export const config = {
       outputCostPer1K: Number.parseFloat(env.OPENAI_COST_PER_1K_TOKENS_OUTPUT),
       imageCostPerImage: Number.parseFloat(env.OPENAI_IMAGE_COST_PER_IMAGE),
     },
+  },
+  docling: {
+    enabled: env.DOCLING_ENABLED === 'true',
+    url: env.DOCLING_URL,
+    chunkSizeMB: Number.parseInt(env.DOCLING_CHUNK_SIZE_MB, 10),
+    timeoutMs: Number.parseInt(env.DOCLING_TIMEOUT_MS, 10),
   },
 } as const;
 

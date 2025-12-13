@@ -12,13 +12,18 @@ import { reportController } from './report.controller.js';
 const router = Router();
 
 // Configure multer for file uploads
+// Increased limit for large files that will be processed by docling
+const maxFileSizeMB = Math.max(config.report.maxUploadSizeMB, 100); // At least 100MB for docling processing
+
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: {
-    fileSize: config.report.maxUploadSizeMB * 1024 * 1024,
+    fileSize: maxFileSizeMB * 1024 * 1024,
+    files: 10, // Allow more files
   },
   fileFilter: (_req, file, cb) => {
     const allowedMimes = [
+      // Structured data formats
       'text/csv',
       'application/json',
       'text/plain',
@@ -26,6 +31,15 @@ const upload = multer({
       // Excel formats
       'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // .xlsx
       'application/vnd.ms-excel', // .xls
+      // Document formats for docling processing
+      'application/pdf',
+      'application/msword', // .doc
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // .docx
+      'application/vnd.ms-powerpoint', // .ppt
+      'application/vnd.openxmlformats-officedocument.presentationml.presentation', // .pptx
+      // Additional text formats
+      'text/html',
+      'application/rtf',
     ];
     if (allowedMimes.includes(file.mimetype)) {
       cb(null, true);
@@ -154,6 +168,16 @@ router.get(
 // ============================================================================
 router.get('/costs/aggregated', (req: Request, res: Response) =>
   reportController.getAggregatedCosts(req, res)
+);
+
+// ============================================================================
+// GET /reports/files/:fileId/status - Get file processing status
+// ============================================================================
+router.get(
+  '/files/:fileId/status',
+  [param('fileId').isString().trim().isLength({ min: 1 })],
+  validate,
+  (req: Request, res: Response) => reportController.getFileProcessingStatus(req, res)
 );
 
 export default router;
