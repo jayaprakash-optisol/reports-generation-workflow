@@ -7,6 +7,15 @@ import type { DataProfile, GeneratedNarrative, ReportStyle } from '../../shared/
 import { toonUtils } from '../../shared/utils/index.js';
 import { costTracker } from '../cost/index.js';
 
+import {
+  getChartAnalysisPrompt,
+  getCoverImagePrompt,
+  getImageGenerationPrompt,
+  getNarrativeUserPrompt,
+  getSectionContentPrompt,
+  getSystemPrompt,
+} from './prompts/index.js';
+
 const logger = createModuleLogger('openai-service');
 
 export class OpenAIService implements ILLMService {
@@ -32,54 +41,10 @@ export class OpenAIService implements ILLMService {
     customInstructions?: string,
     reportId?: string
   ): Promise<GeneratedNarrative> {
-    const stylePrompt = this.getStylePrompt(style);
     const dataContext = this.buildDataContext(dataProfile, parsedData, textContent);
 
-    const systemPrompt = `You are an expert report writer specializing in ${style} reports.
-${stylePrompt}
-
-Your task is to generate professional, insightful content for a report titled "${title}".
-${customInstructions ? `\nAdditional instructions: ${customInstructions}` : ''}
-
-IMPORTANT: The data context below uses TOON format (Token-Oriented Object Notation) - a compact,
-schema-aware data format. TOON uses this pattern:
-- Header line: arrayName[count]{field1,field2,...}:
-- Data rows: value1,value2,... (one row per line, comma-separated)
-
-Example TOON:
-users[2]{id,name,role}:
-  1,Alice,admin
-  2,Bob,user
-
-Parse TOON data naturally - it's self-documenting once you see the header.
-
-Respond with valid JSON in this exact format:
-{
-  "executiveSummary": "A concise 2-3 paragraph executive summary",
-  "sections": [
-    {
-      "sectionId": "unique-id",
-      "sectionTitle": "Section Title",
-      "content": "Section content (2-4 paragraphs)",
-      "order": 1
-    }
-  ],
-  "recommendations": ["Recommendation 1", "Recommendation 2"],
-  "keyFindings": ["Finding 1", "Finding 2", "Finding 3"]
-}`;
-
-    const userPrompt = `Based on the following data analysis, generate comprehensive report content:
-
-DATA PROFILE:
-${dataContext}
-
-Generate a complete narrative with:
-1. Executive Summary - Key takeaways for decision makers
-2. 4-6 detailed sections appropriate for a ${style} report
-3. 3-5 actionable recommendations
-4. 5-7 key findings
-
-Ensure all content is data-driven, professional, and appropriate for the ${style} style.`;
+    const systemPrompt = getSystemPrompt(style, title, customInstructions);
+    const userPrompt = getNarrativeUserPrompt(dataContext, style);
 
     try {
       const response = await this.client.chat.completions.create({
@@ -125,12 +90,7 @@ Ensure all content is data-driven, professional, and appropriate for the ${style
     style: ReportStyle,
     previousSections: string[]
   ): Promise<string> {
-    const prompt = `Generate detailed content for the "${sectionTitle}" section of a ${style} report.
-
-Context: ${sectionContext}
-${previousSections.length > 0 ? `\nPrevious sections covered: ${previousSections.join(', ')}` : ''}
-
-Write 2-4 paragraphs of professional, insightful content. Be specific and data-driven where possible.`;
+    const prompt = getSectionContentPrompt(sectionTitle, sectionContext, style, previousSections);
 
     const response = await this.client.chat.completions.create({
       model: this.model,
@@ -150,16 +110,7 @@ Write 2-4 paragraphs of professional, insightful content. Be specific and data-d
     chartType: string,
     dataDescription: string
   ): Promise<string> {
-    const prompt = `Analyze this ${chartType} chart titled "${chartTitle}".
-
-Data description: ${dataDescription}
-
-Write a brief 1-2 paragraph analysis explaining:
-1. What the chart shows
-2. Key trends or patterns
-3. Notable outliers or anomalies (if any)
-
-Be concise and insight-driven.`;
+    const prompt = getChartAnalysisPrompt(chartTitle, chartType, dataDescription);
 
     const response = await this.client.chat.completions.create({
       model: this.model,
@@ -182,7 +133,7 @@ Be concise and insight-driven.`;
     try {
       const response = await this.client.images.generate({
         model: this.imageModel,
-        prompt: `Professional business illustration: ${prompt}. Clean, modern, corporate style.`,
+        prompt: getImageGenerationPrompt(prompt),
         n: 1,
         size,
         response_format: 'b64_json',
@@ -212,32 +163,7 @@ Be concise and insight-driven.`;
    * Generate cover page description for AI image
    */
   async generateCoverImagePrompt(title: string, style: ReportStyle): Promise<string> {
-    const styleDescriptions = {
-      business: 'corporate, professional, clean lines, blue tones',
-      research: 'academic, scientific, data visualization elements',
-      technical: 'technology, engineering, circuit patterns, modern',
-    };
-
-    return `Abstract ${styleDescriptions[style]} illustration representing "${title}".
-No text in image. Suitable as report cover background.`;
-  }
-
-  /**
-   * Get style-specific prompt instructions
-   */
-  private getStylePrompt(style: ReportStyle): string {
-    const prompts = {
-      business: `Write in a concise, executive-friendly tone. Focus on KPIs, trends, risks, and actionable recommendations.
-Lead with insights, put details in context. Use clear business language.`,
-
-      research: `Write in a formal, structured academic tone. Include methodology considerations.
-Be thorough in analysis, cite data points, discuss limitations. Use precise terminology.`,
-
-      technical: `Write in a detailed, engineering-focused tone. Include system behaviors, metrics, and technical details.
-Focus on performance data, error analysis, and root causes. Use technical terminology appropriately.`,
-    };
-
-    return prompts[style];
+    return getCoverImagePrompt(title, style);
   }
 
   /**
