@@ -13,6 +13,10 @@ An intelligent report generation system that transforms structured and unstructu
 - **Large File Processing**: Automatic chunking and processing of large files (>10MB) using Docling for document extraction
 - **Multi-Format Support**: Supports CSV, JSON, Excel, PDF, DOCX, PPT, and more with intelligent format detection
 
+## Demo
+
+![Demo](./Demo.gif)
+
 ## Architecture
 
 ![System Architecture](./Architecture.png)
@@ -110,167 +114,6 @@ The API includes comprehensive Swagger/OpenAPI documentation:
 
 The OpenAPI specification is maintained separately in the `swagger/` folder and is not embedded in the code.
 
-## API Reference
-
-### Create Report
-
-**POST** `/api/reports`
-
-Create a new report from structured/unstructured data.
-
-```bash
-curl -X POST http://localhost:3000/api/reports \
-  -H "Content-Type: application/json" \
-  -d '{
-    "data": [
-      {
-        "type": "structured",
-        "format": "json",
-        "data": [
-          {"month": "January", "revenue": 45000, "customers": 120},
-          {"month": "February", "revenue": 52000, "customers": 145},
-          {"month": "March", "revenue": 48000, "customers": 132}
-        ]
-      }
-    ],
-    "config": {
-      "title": "Q1 Business Report",
-      "style": "business",
-      "outputFormats": ["PDF", "HTML"]
-    }
-  }'
-```
-
-**Response:**
-
-```json
-{
-  "reportId": "abc123xyz",
-  "workflowId": "report-abc123xyz",
-  "status": "QUEUED",
-  "statusUrl": "/reports/abc123xyz"
-}
-```
-
-### Upload Files
-
-**POST** `/api/reports/upload`
-
-Create a report from file uploads. Supports multiple file formats including CSV, JSON, Excel, PDF, DOCX, PPT, and more.
-
-**Supported File Formats:**
-
-- **Structured Data**: CSV, JSON, Excel (.xlsx, .xls)
-- **Documents**: PDF, DOCX, DOC, PPT, PPTX
-- **Text Formats**: TXT, Markdown, HTML, RTF
-
-**Large File Processing:**
-Files larger than 10MB (configurable) are automatically processed through Docling for intelligent chunking and extraction. Processing status can be tracked via the file processing status endpoint.
-
-```bash
-curl -X POST http://localhost:3000/api/reports/upload \
-  -F "files=@data.csv" \
-  -F "files=@report.pdf" \
-  -F "title=Sales Analysis Report" \
-  -F "style=business" \
-  -F "outputFormats=PDF,HTML"
-```
-
-**Response:**
-
-```json
-{
-  "reportId": "abc123xyz",
-  "workflowId": "report-abc123xyz",
-  "status": "QUEUED",
-  "statusUrl": "/reports/abc123xyz",
-  "filesProcessed": 2,
-  "message": "Report generation started"
-}
-```
-
-### Get File Processing Status
-
-**GET** `/api/reports/files/:fileId/status`
-
-Get the processing status of a file being processed by Docling.
-
-```bash
-curl http://localhost:3000/api/reports/files/abc123-0/status
-```
-
-**Response:**
-
-```json
-{
-  "fileId": "abc123-0",
-  "filename": "large-document.pdf",
-  "status": "processing",
-  "progress": 60,
-  "chunksProcessed": 3,
-  "totalChunks": 5,
-  "startedAt": "2024-01-15T10:30:00.000Z"
-}
-```
-
-**Status Values:**
-
-- `pending`: File queued for processing
-- `processing`: Currently being processed by Docling
-- `completed`: Processing finished successfully
-- `failed`: Processing failed (check error field)
-
-### Get Report Status
-
-**GET** `/api/reports/:reportId`
-
-```bash
-curl http://localhost:3000/api/reports/abc123xyz
-```
-
-**Response:**
-
-```json
-{
-  "id": "abc123xyz",
-  "title": "Q1 Business Report",
-  "style": "business",
-  "status": "COMPLETED",
-  "progress": 100,
-  "files": [
-    {
-      "format": "PDF",
-      "url": "/reports/abc123xyz/files?format=PDF",
-      "size": 245678
-    }
-  ]
-}
-```
-
-### Download Report
-
-**GET** `/api/reports/:reportId/files?format=PDF|DOCX|HTML`
-
-```bash
-curl -O http://localhost:3000/api/reports/abc123xyz/files?format=PDF
-```
-
-### List All Reports
-
-**GET** `/api/reports`
-
-```bash
-curl http://localhost:3000/api/reports
-```
-
-### Cancel Report
-
-**POST** `/api/reports/:reportId/cancel`
-
-```bash
-curl -X POST http://localhost:3000/api/reports/abc123xyz/cancel
-```
-
 ## Report Styles
 
 ### Business Style
@@ -303,37 +146,6 @@ curl -X POST http://localhost:3000/api/reports/abc123xyz/cancel
     { "date": "2024-01-01", "metric": 100, "category": "A" },
     { "date": "2024-01-02", "metric": 150, "category": "B" }
   ]
-}
-```
-
-### Structured Data (CSV)
-
-```json
-{
-  "type": "structured",
-  "format": "csv",
-  "data": "date,metric,category\n2024-01-01,100,A\n2024-01-02,150,B"
-}
-```
-
-### Structured Data (Excel)
-
-```json
-{
-  "type": "structured",
-  "format": "xlsx",
-  "data": "<base64-encoded-excel-file>",
-  "sheetName": "Sheet1"
-}
-```
-
-### Unstructured Data
-
-```json
-{
-  "type": "unstructured",
-  "format": "text",
-  "content": "Additional context and notes about the data..."
 }
 ```
 
