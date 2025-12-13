@@ -89,6 +89,9 @@ export class ReportController {
             'application/vnd.openxmlformats-officedocument.presentationml.presentation' ||
           file.mimetype === 'application/rtf';
 
+        // Check if file is an image
+        const isImage = file.mimetype.startsWith('image/');
+
         const shouldUseDocling = useDocling && (fileSize > chunkSizeBytes || isDocumentFormat);
 
         // Initialize processing status for tracking
@@ -125,6 +128,15 @@ export class ReportController {
             type: 'unstructured' as const,
             format: 'text' as const,
             content: combinedContent,
+          };
+        } else if (isImage) {
+          // For images, encode as base64 and include as unstructured content
+          const base64Image = file.buffer.toString('base64');
+          const dataUri = `data:${file.mimetype};base64,${base64Image}`;
+          return {
+            type: 'unstructured' as const,
+            format: 'text' as const,
+            content: `[Image: ${file.originalname}]\n${dataUri}`,
           };
         } else {
           // Process small files directly

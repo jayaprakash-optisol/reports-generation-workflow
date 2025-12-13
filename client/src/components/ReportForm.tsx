@@ -2,7 +2,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { RotateCcw, Sparkles, Upload } from 'lucide-react';
+import { RotateCcw, Sparkles, Upload, X, FileImage } from 'lucide-react';
 import { useState, useRef } from 'react';
 import { useCreateReport, useUploadReport } from '@/hooks/useReports';
 import { ReportRequest } from '@/types/api';
@@ -23,6 +23,7 @@ export function ReportForm() {
   { "month": "March", "revenue": 48000, "customers": 132 }
 ]`);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [filePreviews, setFilePreviews] = useState<Map<string, string>>(new Map());
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const createReportMutation = useCreateReport();
@@ -36,8 +37,45 @@ export function ReportForm() {
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
-      setSelectedFiles(Array.from(e.target.files));
+      const files = Array.from(e.target.files);
+      setSelectedFiles(files);
+
+      // Generate previews for image files
+      const newPreviews = new Map<string, string>();
+      files.forEach(file => {
+        if (file.type.startsWith('image/')) {
+          const reader = new FileReader();
+          reader.onload = () => {
+            if (reader.result) {
+              newPreviews.set(file.name, reader.result as string);
+              setFilePreviews(new Map(newPreviews));
+            }
+          };
+          reader.readAsDataURL(file);
+        }
+      });
     }
+  };
+
+  const removeFile = (fileName: string) => {
+    setSelectedFiles(prev => prev.filter(f => f.name !== fileName));
+    setFilePreviews(prev => {
+      const newPreviews = new Map(prev);
+      newPreviews.delete(fileName);
+      return newPreviews;
+    });
+  };
+
+  const isImageFile = (file: File): boolean => {
+    return file.type.startsWith('image/');
+  };
+
+  const formatFileSize = (bytes: number): string => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
   };
 
   const handleGenerateReport = async () => {
@@ -95,6 +133,7 @@ export function ReportForm() {
     setInstructions('');
     setJsonData('');
     setSelectedFiles([]);
+    setFilePreviews(new Map());
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -196,7 +235,7 @@ export function ReportForm() {
               ref={fileInputRef}
               type="file"
               multiple
-              accept=".csv,.json,.txt,.md,.xlsx,.xls,.pdf,.doc,.docx,.ppt,.pptx,.html,.rtf,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation,text/html,application/rtf"
+              accept=".csv,.json,.txt,.md,.xlsx,.xls,.pdf,.doc,.docx,.ppt,.pptx,.html,.rtf,.jpg,.jpeg,.png,.gif,.webp,.svg,image/*,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation,text/html,application/rtf"
               onChange={handleFileChange}
               className="hidden"
             />
@@ -214,9 +253,72 @@ export function ReportForm() {
               </p>
             )}
             <p className="text-xs text-muted-foreground mt-2 text-center">
-              CSV, JSON, Excel (.xlsx, .xls), PDF, DOC, DOCX, PPT, PPTX, Markdown, HTML, RTF, or text
+              CSV, JSON, Excel, PDF, DOC, DOCX, PPT, PPTX, Images, Markdown, HTML, RTF, or text
             </p>
           </div>
+
+          {/* File Preview Section */}
+          {selectedFiles.length > 0 && (
+            <div className="mt-4 space-y-3">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                {selectedFiles.map(file => {
+                  const preview = filePreviews.get(file.name);
+                  const isImage = isImageFile(file);
+
+                  return (
+                    <div
+                      key={file.name}
+                      className="relative group border border-border/50 rounded-lg overflow-hidden bg-muted/30 hover:border-primary/50 transition-all duration-200"
+                    >
+                      {isImage && preview ? (
+                        <div className="aspect-square relative">
+                          <img
+                            src={preview}
+                            alt={file.name}
+                            className="w-full h-full object-cover"
+                          />
+                          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-200 flex items-center justify-center">
+                            <button
+                              type="button"
+                              onClick={() => removeFile(file.name)}
+                              className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-destructive/80 hover:bg-destructive text-white rounded-full p-1.5"
+                              aria-label={`Remove ${file.name}`}
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="aspect-square flex flex-col items-center justify-center p-3 bg-muted/50">
+                          <FileImage className="w-8 h-8 text-muted-foreground mb-2" />
+                          <p className="text-xs text-muted-foreground text-center truncate w-full px-1">
+                            {file.name}
+                          </p>
+                          <p className="text-xs text-muted-foreground/70 mt-1">
+                            {formatFileSize(file.size)}
+                          </p>
+                          <button
+                            type="button"
+                            onClick={() => removeFile(file.name)}
+                            className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-destructive/80 hover:bg-destructive text-white rounded-full p-1"
+                            aria-label={`Remove ${file.name}`}
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </div>
+                      )}
+                      <div className="p-2 bg-muted/50">
+                        <p className="text-xs text-foreground truncate" title={file.name}>
+                          {file.name}
+                        </p>
+                        <p className="text-xs text-muted-foreground">{formatFileSize(file.size)}</p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 

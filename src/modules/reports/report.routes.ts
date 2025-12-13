@@ -40,6 +40,13 @@ const upload = multer({
       // Additional text formats
       'text/html',
       'application/rtf',
+      // Image formats
+      'image/jpeg',
+      'image/jpg',
+      'image/png',
+      'image/gif',
+      'image/webp',
+      'image/svg+xml',
     ];
     if (allowedMimes.includes(file.mimetype)) {
       cb(null, true);
