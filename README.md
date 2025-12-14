@@ -11,6 +11,7 @@ An intelligent report generation system that transforms structured and unstructu
 - **Reliable Workflow Orchestration**: Temporal-based workflows with retries, status tracking, and fault tolerance
 - **Data Profiling**: Automatic detection of data types, statistical summaries, and quality scoring
 - **Large File Processing**: Automatic chunking and processing of large files (>10MB) using Docling for document extraction
+- **TOON Inputs**: To reduce LLM token cost.=
 - **Multi-Format Support**: Supports CSV, JSON, Excel, PDF, DOCX, PPT, and more with intelligent format detection
 
 ## Demo
