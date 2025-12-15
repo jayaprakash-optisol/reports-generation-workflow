@@ -135,20 +135,6 @@ The OpenAPI specification is maintained separately in the `swagger/` folder and 
 - **Sections**: Overview, System Metrics, Performance Analysis, Error Analysis, Recommendations
 - **Best for**: Technical reports, incident reports, system documentation
 
-## Input Data Formats
-
-### Structured Data (JSON)
-
-```json
-{
-  "type": "structured",
-  "format": "json",
-  "data": [
-    { "date": "2024-01-01", "metric": 100, "category": "A" },
-    { "date": "2024-01-02", "metric": 150, "category": "B" }
-  ]
-}
-```
 
 ## Large File Processing with Docling
 
