@@ -114,23 +114,60 @@ export class HTMLGenerator implements IHTMLGenerator {
     // Page 2: Summary with metrics
     const summaryPage = this.generateSummaryPage(narrative, dataProfile, report.style, palette);
 
+    // Distribute charts intelligently across sections
+    const chartDistribution = this.distributeCharts(charts, narrative.sections.length);
+
+    // Determine which pages to include
+    const hasSectionsPage = narrative.sections.length > 0;
+    const hasChartsPage = chartDistribution.dedicated.length > 0;
+
+    // Calculate page numbers
+    let currentPage = 3; // Start after cover (1) and summary (2)
+    const findingsPageNum = currentPage++;
+    const analysisPageNum = currentPage++;
+    const sectionsPageNum = hasSectionsPage ? currentPage++ : 0;
+    const chartsPageNum = hasChartsPage ? currentPage++ : 0;
+    const recommendationsPageNum = currentPage;
+
     // Page 3: Key Findings with visuals
-    const findingsPage = this.generateFindingsPage(narrative, charts.slice(0, 2), palette);
+    const findingsPage = this.generateFindingsPage(
+      narrative,
+      chartDistribution.findings,
+      palette,
+      findingsPageNum
+    );
 
     // Page 4: Analysis with charts
     const analysisPage = this.generateAnalysisPage(
       narrative,
-      charts.slice(2, 4),
+      chartDistribution.analysis,
       dataProfile,
-      palette
+      palette,
+      analysisPageNum
     );
 
-    // Page 5: Recommendations
+    // Page 5: Detailed sections with charts (only if we have sections)
+    const sectionsPage = hasSectionsPage
+      ? this.generateDetailedSectionsPage(
+          narrative,
+          chartDistribution.sections,
+          palette,
+          sectionsPageNum
+        )
+      : '';
+
+    // Page 6: Dedicated charts page (if there are many charts)
+    const chartsPage = hasChartsPage
+      ? this.generateChartsPage(chartDistribution.dedicated, palette, chartsPageNum)
+      : '';
+
+    // Page 7: Recommendations
     const recommendationsPage = this.generateRecommendationsPage(
       narrative,
       dataProfile,
       companyName,
-      palette
+      palette,
+      recommendationsPageNum
     );
 
     const css = this.generateInfographicCSS(palette, styleConfig);
@@ -148,6 +185,8 @@ export class HTMLGenerator implements IHTMLGenerator {
   ${summaryPage}
   ${findingsPage}
   ${analysisPage}
+  ${sectionsPage}
+  ${chartsPage}
   ${recommendationsPage}
 </body>
 </html>`;
@@ -312,7 +351,8 @@ export class HTMLGenerator implements IHTMLGenerator {
   private generateFindingsPage(
     narrative: GeneratedNarrative,
     charts: GeneratedChart[],
-    palette: (typeof COLOR_PALETTES)[keyof typeof COLOR_PALETTES]
+    palette: (typeof COLOR_PALETTES)[keyof typeof COLOR_PALETTES],
+    pageNum: number
   ): string {
     // Timeline-style findings
     const findingsTimeline = narrative.keyFindings
@@ -358,7 +398,7 @@ export class HTMLGenerator implements IHTMLGenerator {
         ${chartsHtml}
       </div>
 
-      <div class="page-number">Page 3</div>
+      <div class="page-number">Page ${pageNum}</div>
     </div>
     `;
   }
@@ -370,7 +410,8 @@ export class HTMLGenerator implements IHTMLGenerator {
     narrative: GeneratedNarrative,
     charts: GeneratedChart[],
     dataProfile: DataProfile,
-    palette: (typeof COLOR_PALETTES)[keyof typeof COLOR_PALETTES]
+    palette: (typeof COLOR_PALETTES)[keyof typeof COLOR_PALETTES],
+    pageNum: number
   ): string {
     // Analysis sections as numbered cards
     const sectionsHtml = narrative.sections
@@ -416,8 +457,15 @@ export class HTMLGenerator implements IHTMLGenerator {
     `
         : '';
 
-    // Charts
-    const chartHtml = charts.length > 0 ? this.generateChartCard(charts[0]) : '';
+    // Charts - show all analysis charts
+    const chartsHtml =
+      charts.length > 0
+        ? `
+      <div class="charts-grid">
+        ${charts.map(chart => this.generateChartCard(chart)).join('')}
+      </div>
+    `
+        : '';
 
     return `
     <div class="page content-page">
@@ -434,10 +482,10 @@ export class HTMLGenerator implements IHTMLGenerator {
 
       <div class="data-visuals">
         ${distributionHtml}
-        ${chartHtml ? `<div class="chart-area">${chartHtml}</div>` : ''}
+        ${chartsHtml}
       </div>
 
-      <div class="page-number">Page 4</div>
+      <div class="page-number">Page ${pageNum}</div>
     </div>
     `;
   }
@@ -449,7 +497,8 @@ export class HTMLGenerator implements IHTMLGenerator {
     narrative: GeneratedNarrative,
     dataProfile: DataProfile,
     companyName: string,
-    palette: (typeof COLOR_PALETTES)[keyof typeof COLOR_PALETTES]
+    palette: (typeof COLOR_PALETTES)[keyof typeof COLOR_PALETTES],
+    pageNum: number
   ): string {
     // Numbered recommendations with icons
     const recsHtml = narrative.recommendations
@@ -526,7 +575,130 @@ export class HTMLGenerator implements IHTMLGenerator {
         </div>
       </div>
 
-      <div class="page-number">Page 5</div>
+      <div class="page-number">Page ${pageNum}</div>
+    </div>
+    `;
+  }
+
+  /**
+   * Distribute charts intelligently across sections
+   */
+  private distributeCharts(
+    charts: GeneratedChart[],
+    sectionCount: number
+  ): {
+    findings: GeneratedChart[];
+    analysis: GeneratedChart[];
+    sections: GeneratedChart[][];
+    dedicated: GeneratedChart[];
+  } {
+    if (charts.length === 0) {
+      return { findings: [], analysis: [], sections: [], dedicated: [] };
+    }
+
+    // Allocate charts: 2 for findings, 2 for analysis, 1-2 per section, rest for dedicated page
+    const findings: GeneratedChart[] = charts.slice(0, 2);
+    const analysis: GeneratedChart[] = charts.slice(2, 4);
+    const remainingCharts = charts.slice(4);
+
+    // Distribute remaining charts across sections (1-2 per section)
+    const sections: GeneratedChart[][] = [];
+    const chartsPerSection = Math.max(1, Math.floor(remainingCharts.length / sectionCount));
+    let chartIndex = 0;
+
+    for (let i = 0; i < sectionCount && chartIndex < remainingCharts.length; i++) {
+      const sectionCharts = remainingCharts.slice(
+        chartIndex,
+        chartIndex + Math.min(chartsPerSection, 2)
+      );
+      sections.push(sectionCharts);
+      chartIndex += sectionCharts.length;
+    }
+
+    // Any remaining charts go to dedicated page
+    const dedicated = remainingCharts.slice(chartIndex);
+
+    return { findings, analysis, sections, dedicated };
+  }
+
+  /**
+   * Generate detailed sections page with charts
+   */
+  private generateDetailedSectionsPage(
+    narrative: GeneratedNarrative,
+    sectionCharts: GeneratedChart[][],
+    _palette: (typeof COLOR_PALETTES)[keyof typeof COLOR_PALETTES],
+    pageNum: number
+  ): string {
+    const sectionsHtml = narrative.sections
+      .map((section, index) => {
+        const charts = sectionCharts[index] ?? [];
+        const chartsHtml =
+          charts.length > 0
+            ? `
+          <div class="section-charts">
+            ${charts.map(chart => this.generateChartCard(chart)).join('')}
+          </div>
+        `
+            : '';
+
+        return `
+        <div class="detailed-section">
+          <div class="section-title-wrapper">
+            <span class="section-num-small">${String(index + 1).padStart(2, '0')}</span>
+            <h3>${this.escapeHtml(section.sectionTitle)}</h3>
+          </div>
+          <div class="section-content">
+            ${this.formatParagraphs(section.content)}
+          </div>
+          ${chartsHtml}
+        </div>
+      `;
+      })
+      .join('');
+
+    return `
+    <div class="page content-page">
+      <div class="page-wave"></div>
+
+      <div class="section-header">
+        <span class="section-num">03</span>
+        <h2 class="section-title">Detailed Analysis</h2>
+      </div>
+
+      <div class="detailed-sections">
+        ${sectionsHtml}
+      </div>
+
+      <div class="page-number">Page ${pageNum}</div>
+    </div>
+    `;
+  }
+
+  /**
+   * Generate dedicated charts page
+   */
+  private generateChartsPage(
+    charts: GeneratedChart[],
+    _palette: (typeof COLOR_PALETTES)[keyof typeof COLOR_PALETTES],
+    pageNum: number
+  ): string {
+    const chartsHtml = charts.map(chart => this.generateChartCard(chart)).join('');
+
+    return `
+    <div class="page content-page">
+      <div class="page-wave"></div>
+
+      <div class="section-header">
+        <span class="section-num">04</span>
+        <h2 class="section-title">Data Visualizations</h2>
+      </div>
+
+      <div class="charts-grid-full">
+        ${chartsHtml}
+      </div>
+
+      <div class="page-number">Page ${pageNum}</div>
     </div>
     `;
   }
@@ -1038,6 +1210,74 @@ export class HTMLGenerator implements IHTMLGenerator {
         font-size: 12px;
         font-weight: 600;
         color: var(--text);
+      }
+
+      .charts-grid-full {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 24px;
+        padding: 0 20px;
+      }
+
+      .detailed-sections {
+        padding: 0 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 32px;
+      }
+
+      .detailed-section {
+        background: var(--bg);
+        border-radius: 16px;
+        padding: 24px;
+      }
+
+      .section-title-wrapper {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        margin-bottom: 16px;
+      }
+
+      .section-num-small {
+        width: 40px;
+        height: 40px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, ${palette.gradient[0]}, ${palette.gradient[1]});
+        color: white;
+        font-size: 14px;
+        font-weight: 700;
+        font-family: var(--font-heading);
+        flex-shrink: 0;
+      }
+
+      .detailed-section h3 {
+        font-size: 18px;
+        font-weight: 700;
+        color: var(--text);
+        font-family: var(--font-heading);
+        margin: 0;
+      }
+
+      .section-content {
+        margin-bottom: 20px;
+      }
+
+      .section-content p {
+        font-size: 13px;
+        color: var(--text-light);
+        line-height: 1.7;
+        margin-bottom: 12px;
+      }
+
+      .section-charts {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 16px;
+        margin-top: 20px;
       }
 
       /* Analysis Grid */

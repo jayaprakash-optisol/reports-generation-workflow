@@ -411,6 +411,9 @@ export class DOCXGenerator implements IDOCXGenerator {
     colors: { primary: string }
   ): Paragraph[] {
     const elements: Paragraph[] = [];
+
+    // Distribute charts intelligently: 1-2 per section, ensuring all charts are used
+    const chartsPerSection = Math.max(1, Math.floor(charts.length / narrative.sections.length));
     let chartIndex = 0;
 
     for (const section of narrative.sections) {
@@ -446,11 +449,71 @@ export class DOCXGenerator implements IDOCXGenerator {
         );
       }
 
-      // Add charts for this section
-      const sectionCharts = charts.slice(chartIndex, chartIndex + 2);
-      chartIndex += 2;
+      // Add charts for this section (1-2 charts per section)
+      const sectionCharts = charts.slice(
+        chartIndex,
+        Math.min(chartIndex + chartsPerSection, charts.length)
+      );
+      chartIndex += sectionCharts.length;
 
       for (const chart of sectionCharts) {
+        if (chart.imageBase64) {
+          try {
+            elements.push(
+              new Paragraph({
+                alignment: AlignmentType.CENTER,
+                children: [
+                  new ImageRun({
+                    data: Buffer.from(chart.imageBase64, 'base64'),
+                    transformation: {
+                      width: 500,
+                      height: 300,
+                    },
+                    type: 'png',
+                  }),
+                ],
+                spacing: { before: 200, after: 100 },
+              }),
+              // Chart caption
+              new Paragraph({
+                alignment: AlignmentType.CENTER,
+                children: [
+                  new TextRun({
+                    text: chart.config.title,
+                    italics: true,
+                    size: 20,
+                    color: '666666',
+                  }),
+                ],
+                spacing: { after: 300 },
+              })
+            );
+          } catch (error) {
+            logger.warn(`Could not embed chart: ${chart.id}`, { error });
+          }
+        }
+      }
+    }
+
+    // Add any remaining charts in a dedicated section
+    const remainingCharts = charts.slice(chartIndex);
+    if (remainingCharts.length > 0) {
+      elements.push(
+        new Paragraph({
+          heading: HeadingLevel.HEADING_1,
+          children: [
+            new TextRun({
+              text: 'Additional Data Visualizations',
+              bold: true,
+              size: 32,
+              color: colors.primary,
+            }),
+          ],
+          spacing: { before: 400, after: 200 },
+        })
+      );
+
+      for (const chart of remainingCharts) {
         if (chart.imageBase64) {
           try {
             elements.push(
